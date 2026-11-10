@@ -200,14 +200,15 @@ def area_photos(bbox):
         meta = info.get('extmetadata', {})
         license_name = meta.get('LicenseShortName', {}).get('value', '')
         series = photo_series(page.get('title', ''))
-        if series in seen:
-            continue   # one photo per series: avoids near-identical astronaut frames
+        author = clean_text(meta.get('Artist', {}).get('value'))
+        if series in seen or author in seen:
+            continue   # one photo per series and per photographer: avoids near-identical shots
         if info.get('mime') == 'image/jpeg' and license_allowed(license_name) and media_ok(page.get('title', ''), meta):
-            seen.add(series)
+            seen.update({series, author})
             photos.append({
                 'thumb': info.get('thumburl'),
                 'page': info.get('descriptionurl'),
-                'author': clean_text(meta.get('Artist', {}).get('value')),
+                'author': author,
                 'license': clean_text(license_name),
             })
     return photos[:6]
