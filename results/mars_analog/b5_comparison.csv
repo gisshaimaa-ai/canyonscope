@@ -1,0 +1,8 @@
+variable,Earth median,Mars median,Mars/Earth,Cliff's delta,p (Mann-Whitney),p (KS)
+Area / D²,3.151,3.062,0.97,-0.0,0.946,0.611
+Length / D,2.992,2.991,1.0,-0.09,0.119,0.015
+Mean width / D,1.072,1.026,0.96,0.08,0.138,0.002
+Length / width,2.689,3.314,1.23,-0.21,0.000,0.000
+Max incision / D,0.492,0.326,0.66,0.45,0.000,0.000
+Relief / length,0.196,0.174,0.88,0.15,0.008,0.008
+"Solidity (1 = simple, low = branched)",0.796,0.756,0.95,0.18,0.001,0.000

@@ -1,0 +1,5 @@
+rim_depth_D,tributaries,area_precision_%,area_recall_%,F1_%,canyons_covered_50%,median_area_D2
+0.05,233,39,76,52,90,3.6
+0.1,219,42,68,52,82,3.7
+0.15,208,43,59,50,69,3.4
+0.2,202,42,52,47,55,3.3

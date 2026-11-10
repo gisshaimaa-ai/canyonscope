@@ -1,0 +1,9 @@
+{
+  "trunk_depth_D": 0.5,
+  "floor_depth_D": 0.95,
+  "floor_half_width_D": 0.5,
+  "tributary_window_D": 4.0,
+  "rim_depth_D": 0.05,
+  "min_incision_D": 0.15,
+  "min_area_D2": 1.0
+}

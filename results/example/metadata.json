@@ -1,0 +1,25 @@
+{
+  "bbox_wgs84": [
+    -112.2,
+    36.05,
+    -112.08,
+    36.15
+  ],
+  "date_range": "2026-05-15/2026-08-31",
+  "scene_date": "2026-06-10",
+  "sentinel2_scene_ids": [
+    "S2C_MSIL2A_20260610T180911_R084_T12SVF_20260610T231558",
+    "S2C_MSIL2A_20260610T180911_R084_T12SVE_20260610T231558",
+    "S2C_MSIL2A_20260610T180911_R084_T12SUF_20260610T231558",
+    "S2C_MSIL2A_20260610T180911_R084_T12SUE_20260610T231558"
+  ],
+  "model": "models/seg_rgb_v2/best.pt",
+  "confidence_threshold": 0.05,
+  "tile_size_px": 640,
+  "tile_step_px": 320,
+  "detections": 12,
+  "canyon_area_km2": 67.3,
+  "mean_confidence": 0.417,
+  "area_km2": 122.86,
+  "runtime_seconds": 39
+}

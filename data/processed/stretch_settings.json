@@ -1,0 +1,29 @@
+{
+  "offset": 1000,
+  "rgb_reflectance_limits": {
+    "red": {
+      "low": 0.051100000739097595,
+      "high": 0.3386000096797943
+    },
+    "green": {
+      "low": 0.05050000175833702,
+      "high": 0.2587999999523163
+    },
+    "blue": {
+      "low": 0.03150000050663948,
+      "high": 0.19629999995231628
+    }
+  },
+  "hillshade_limits": [
+    0,
+    1
+  ],
+  "slope_limits_degrees": [
+    0,
+    60
+  ],
+  "elevation_limits_m": [
+    300,
+    3000
+  ]
+}

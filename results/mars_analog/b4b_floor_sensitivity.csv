@@ -1,0 +1,4 @@
+floor_depth_D,earth_count,earth_precision_%,earth_recall_%,earth_F1_%,earth_median_D2,mars_count,mars_median_D2
+0.8,293,34,52,41,2.54,244,2.63
+0.9,297,37,66,47,2.73,207,3.02
+0.95,273,37,71,49,3.15,188,3.06
