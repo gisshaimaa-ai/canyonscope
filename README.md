@@ -2,7 +2,7 @@
 
 **CanyonScope** is a GeoAI app that finds and outlines *tributary canyons* (the side canyons that join the Colorado River) in Sentinel-2 satellite imagery with a YOLO segmentation model, separates neighbouring canyons with elevation data, and turns them into an interactive, downloadable map. The same Grand Canyon catalogue is then used as a **terrestrial analog** to test whether the side canyons of **Valles Marineris on Mars** have the shape of water-carved canyons.
 
-**Live app:** `<add the Streamlit Community Cloud link here>`
+**Live app:** https://canyonscope.streamlit.app
 
 | | |
 |---|---|
@@ -125,7 +125,7 @@ all parameters: `results/example/metadata.json`.
 **Python 3.13** (tested in Google Colab, November 2026). No API keys, accounts or environment variables are needed: all data come from public archives.
 
 ```bash
-git clone https://github.com/<your-username>/canyonscope.git
+git clone https://github.com/gisshaimaa-ai/canyonscope.git
 cd canyonscope
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt                          # 3-6 minutes (CPU-only PyTorch)
