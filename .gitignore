@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.streamlit/secrets.toml
+.env
+# Large intermediate rasters made by notebooks/mars_analog.ipynb (rebuilt from public sources)
+results/mars_analog/*_200m.tif
+results/mars_analog/valles_marineris_incision_depth.tif
+work/
+# Heavy outputs of notebooks/earth_pipeline.ipynb (small final copies live in results/)
+data/raw/
+data/processed/*.tif
+yolo_dataset/
+outputs/
+runs/
