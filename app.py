@@ -167,6 +167,14 @@ def media_ok(title, meta):
     return not BLOCKED_MEDIA.search(text)
 
 
+def photo_series(title):
+    """Key shared by near-identical photos: same astronaut series (ISS, STS) or same name with only numbers changed."""
+    name = re.sub(r'\.[a-z]+$', '', title.lower().removeprefix('file:')).replace('_', ' ')
+    if re.match(r'(iss|sts)[\s-]?\d', name) or 'from the iss' in name or 'from space' in name:
+        return 'astronaut photo'
+    return re.sub(r'[\d\W]+', ' ', name).strip()
+
+
 def clean_text(value):
     return re.sub(r'<[^>]+>', '', str(value or 'Unknown')).strip()[:70]
 
@@ -186,12 +194,16 @@ def area_photos(bbox):
     except Exception:
         return []
 
-    photos = []
-    for page in pages.values():
+    photos, seen = [], set()
+    for page in sorted(pages.values(), key=lambda item: item.get('index', 0)):
         info = (page.get('imageinfo') or [{}])[0]
         meta = info.get('extmetadata', {})
         license_name = meta.get('LicenseShortName', {}).get('value', '')
+        series = photo_series(page.get('title', ''))
+        if series in seen:
+            continue   # one photo per series: avoids near-identical astronaut frames
         if info.get('mime') == 'image/jpeg' and license_allowed(license_name) and media_ok(page.get('title', ''), meta):
+            seen.add(series)
             photos.append({
                 'thumb': info.get('thumburl'),
                 'page': info.get('descriptionurl'),
