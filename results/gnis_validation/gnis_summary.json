@@ -1,0 +1,10 @@
+{
+  "gnis_source": "https://prd-tnm.s3.amazonaws.com/StagedProducts/GeographicNames/DomesticNames/DomesticNames_AZ_Text.zip",
+  "named_tributaries": 208,
+  "found": 140,
+  "recall_percent": 67.3,
+  "detections": 325,
+  "detections_with_official_name": 108,
+  "distance_rule_m": 500,
+  "mouth_depth_rule_m": 614.5
+}

@@ -26,6 +26,7 @@ METRICS_FILE = APP_DIR / 'results/model_v2_results.csv'
 MARS_DIR = APP_DIR / 'results/mars_analog'
 HERO_FILE = APP_DIR / 'assets/hero.jpg'
 MEDIA_FILE = APP_DIR / 'assets/media.json'
+GNIS_DIR = APP_DIR / 'results/gnis_validation'
 IMAGERY = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 GEOLOGY_COLORS = ['#e9c46a', '#f4a261', '#e76f51', '#c98b6b', '#a7c4a0', '#7fb7be', '#b392ac', '#d4a5a5', '#90a955', '#bc6c25']
 DATE_OPTIONS = {
@@ -118,11 +119,13 @@ def short_age(value):
 
 @st.cache_data(show_spinner=False)
 def load_results():
-    table = gpd.read_file(RESULTS_DIR / 'grand_canyon_detections_geology.geojson')
+    named = RESULTS_DIR / 'grand_canyon_detections_named.geojson'  # adds official USGS GNIS names
+    table = gpd.read_file(named if named.exists() else RESULTS_DIR / 'grand_canyon_detections_geology.geojson')
+    table['name'] = table['gnis_name'].fillna('') if 'gnis_name' in table else ''
     table['scene_date'] = table['scene_date'].astype(str)
     table['region'] = table['center_lon'].map(region_name)
     table['geology_age'] = table['geology_age'].map(short_age)
-    columns = ['detection_id', 'region', 'area_km2', 'est_length_km', 'mean_width_km', 'max_confidence',
+    columns = ['detection_id', 'name', 'region', 'area_km2', 'est_length_km', 'mean_width_km', 'max_confidence',
                'mean_confidence', 'center_lon', 'center_lat', 'scene_date', 'geology_unit',
                'geology_lithology', 'geology_age', 'geometry']
     return table[columns]
@@ -343,12 +346,16 @@ def build_map(bbox, clipped, detections):
         ).add_to(canyon_map)
 
     if detections is not None and len(detections) > 0:
-        fields = ['detection_id', 'area_km2', 'mean_confidence']
+        fields = ['detection_id', 'name', 'area_km2', 'mean_confidence']
+        shown = detections.copy()
+        if 'name' not in shown:
+            shown['name'] = ''
+        shown['name'] = shown['name'].replace('', 'Unnamed')
         folium.GeoJson(
-            detections.to_crs(4326).to_json(),
+            shown[fields + ['geometry']].to_crs(4326).to_json(),
             name='Detections',
             style_function=detection_style,
-            tooltip=folium.GeoJsonTooltip(fields=fields, aliases=['ID', 'Area (km²)', 'Mean confidence']),
+            tooltip=folium.GeoJsonTooltip(fields=fields, aliases=['ID', 'Official name (USGS GNIS)', 'Area (km²)', 'Mean confidence']),
         ).add_to(canyon_map)
 
     Draw(
@@ -385,6 +392,29 @@ def add_geology(table, clipped):
     return table
 
 
+@st.cache_data(show_spinner=False)
+def load_gnis():
+    path = GNIS_DIR / 'gnis_named_tributaries_check.csv'
+    return pd.read_csv(path) if path.exists() else pd.DataFrame()
+
+
+def add_names(table):
+    """Name each detection after the official USGS GNIS canyon whose mouth is within 500 m (nearest wins)."""
+    names = load_gnis()
+    if len(table) == 0:
+        return table
+    table['name'] = ''
+    if len(names) == 0:
+        return table
+    mouths = gpd.GeoDataFrame(names[['name']], geometry=gpd.points_from_xy(names.mouth_lon, names.mouth_lat), crs=4326).to_crs(table.crs)
+    for index, geometry in table.geometry.items():
+        distance = mouths.distance(geometry)
+        if distance.min() <= 500:
+            table.loc[index, 'name'] = mouths.loc[distance.idxmin(), 'name']
+    columns = ['detection_id', 'name'] + [c for c in table.columns if c not in ('detection_id', 'name')]
+    return table[columns]
+
+
 def run_detection(status):
     sys.path.insert(0, str(APP_DIR))
     import detector
@@ -397,6 +427,7 @@ def run_detection(status):
         )
         status.info('Adding geology')
         result['detections'] = add_geology(result['detections'], geology_in_area(st.session_state.bbox))
+        result['detections'] = add_names(result['detections'])
         st.session_state.result = result
     except Exception as error:
         st.session_state.result = None
@@ -617,6 +648,28 @@ def show_method():
     st.dataframe(tests, width='stretch', hide_index=True)
     st.warning('The test samples are small, and metrics measure canyon terrain better than separation of each canyon. Detection counts are not a complete canyon inventory.')
 
+    names = load_gnis()
+    if len(names):
+        st.subheader('Independent check: official USGS GNIS canyon names')
+        st.caption('Named tributaries of the Grand Canyon from the U.S. Geological Survey Geographic Names Information System, '
+                   'never used in training. A canyon counts as found when a detection lies within 500 m of its mouth-to-head line.')
+        canyons = names[names.kind == 'Canyon / Gorge'] if 'kind' in names else names
+        content = ''.join(f'<div class="tile stat"><strong>{value}</strong><span>{label}</span></div>' for value, label in [
+            (f"{names.found.sum()} / {len(names)}", 'official named tributaries found'),
+            (f"{names.found.mean() * 100:.0f}%", 'recall, all named tributaries'),
+            (f"{canyons.found.mean() * 100:.0f}%", 'recall, names with Canyon or Gorge'),
+            (f"{(names.distance_m <= 2000).mean() * 100:.0f}%", 'recall if 2 km is allowed'),
+        ])
+        st.markdown(f'<div class="grid g4">{content}</div>', unsafe_allow_html=True)
+        if 'reach' in names:
+            by_reach = names.groupby('reach').agg(Named=('found', 'size'), Found=('found', 'sum')).reset_index()
+            by_reach['Recall %'] = (by_reach.Found / by_reach.Named * 100).round(1)
+            by_reach['reach'] = by_reach['reach'].str[2:]
+            by_reach = by_reach.rename(columns={'reach': 'Reach of the river'})
+            st.dataframe(by_reach, width='stretch', hide_index=True)
+            st.info('Recall is highest in the central canyon where the model was trained (83% of true canyons) and lower in '
+                    'narrow Marble Canyon and the western canyon, the same pattern as the Lava Falls test.')
+
 
 def show_data(results):
     st.markdown('<div class="page-title">Data</div><div class="page-sub">Download the saved Grand Canyon catalogue.</div>', unsafe_allow_html=True)
@@ -626,10 +679,14 @@ def show_data(results):
         ('Imagery', 'Copernicus Sentinel-2'),
         ('Elevation', 'USGS 3DEP'),
         ('Geology', 'USGS SGMC'),
+        ('Canyon names', 'USGS GNIS (official names, used only for checking and labels)'),
         ('Photos and videos', 'Wikimedia Commons, credited on each item'),
     ]))
     first, second, third = st.columns(3)
-    first.download_button('Download GeoJSON', (RESULTS_DIR / 'grand_canyon_detections_geology.geojson').read_bytes(),
+    catalogue_file = RESULTS_DIR / 'grand_canyon_detections_named.geojson'
+    if not catalogue_file.exists():
+        catalogue_file = RESULTS_DIR / 'grand_canyon_detections_geology.geojson'
+    first.download_button('Download GeoJSON', catalogue_file.read_bytes(),
                           'grand_canyon_detections.geojson', 'application/geo+json', width='stretch')
     second.download_button('Download CSV', results.drop(columns='geometry').to_csv(index=False),
                            'grand_canyon_detections.csv', 'text/csv', width='stretch')

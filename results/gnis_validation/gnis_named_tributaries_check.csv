@@ -1,0 +1,209 @@
+feature_id,name,mouth_lon,mouth_lat,has_head_point,mouth_depth_m,distance_m,found,nearest_detection,reach,kind
+500,Agate Canyon,-112.2802545,36.1437264,True,1317.0,0,True,G0075,2 Central Grand Canyon,Canyon / Gorge
+649,Andrus Canyon,-113.3520774,36.1485184,True,1287.0,0,True,G0243,2 Central Grand Canyon,Canyon / Gorge
+828,Asbestos Canyon,-111.9436725,36.0444463,True,1459.0,0,True,G0122,2 Central Grand Canyon,Canyon / Gorge
+20639,Awatubi Canyon,-111.8228673,36.2329873,True,1134.0,547,False,G0135,1 Marble Canyon (east),Canyon / Gorge
+906,Azure Ridge Draw,-114.0057458,36.2541922,True,1119.0,14527,False,G0236,3 Western canyon / Lake Mead,"Wash, Valley, Draw, Hollow, other"
+935,Badger Canyon,-111.6573347,36.7739287,True,978.0,26670,False,G0314,1 Marble Canyon (east),Canyon / Gorge
+976,Balanced Rock Canyon,-113.9369923,36.1774616,True,1081.0,4001,False,G0236,3 Western canyon / Lake Mead,Canyon / Gorge
+1041,Basalt Canyon,-111.8408455,36.0964788,True,1270.0,0,True,G0187,2 Central Grand Canyon,Canyon / Gorge
+1053,Bass Canyon,-112.3386266,36.2290428,True,1394.0,0,True,G0095,2 Central Grand Canyon,Canyon / Gorge
+1162,Beaver Canyon,-112.7302816,36.2828553,True,1104.0,0,True,G0194,2 Central Grand Canyon,Canyon / Gorge
+1175,Bedrock Canyon,-111.8816492,36.4990403,True,951.0,7764,False,G0059,1 Marble Canyon (east),Canyon / Gorge
+1174,Bedrock Canyon,-112.4623047,36.3281822,True,1399.0,0,True,G0218,2 Central Grand Canyon,Canyon / Gorge
+1297,Big Canyon,-111.7067388,36.1784739,True,878.0,0,True,G0203,2 Central Grand Canyon,Canyon / Gorge
+1303,Big Cove,-113.0145537,36.251138,True,1198.0,0,True,G0258,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+1304,Big Cove Canyon,-112.6255893,36.5822271,True,643.0,0,True,G0271,2 Central Grand Canyon,Canyon / Gorge
+1342,Big Point Canyon,-113.010343,36.2553504,True,1133.0,0,True,G0258,2 Central Grand Canyon,Canyon / Gorge
+1484,Black Canyon,-113.7825239,36.5444074,True,801.0,10897,False,G0319,3 Western canyon / Lake Mead,Canyon / Gorge
+1599,Black Rock Gulch,-113.7257742,36.9739552,True,701.0,34673,False,G0319,3 Western canyon / Lake Mead,"Wash, Valley, Draw, Hollow, other"
+1654,Blacktail Canyon,-112.4725508,36.2403264,True,1288.0,240,True,G0133,2 Central Grand Canyon,Canyon / Gorge
+1717,Blue Mountain Canyon,-113.3035207,35.7314574,True,865.0,0,True,G0185,2 Central Grand Canyon,Canyon / Gorge
+1952,Bridge Canyon,-113.5234497,35.773917,True,1313.0,0,True,G0125,3 Western canyon / Lake Mead,Canyon / Gorge
+1961,Bright Angel Canyon,-112.0939089,36.099583,True,1449.0,0,True,G0008,2 Central Grand Canyon,Canyon / Gorge
+2066,Buck Farm Canyon,-111.8804888,36.4044663,True,1120.0,3868,False,G0059,1 Marble Canyon (east),Canyon / Gorge
+2214,Burnt Canyon,-113.7503563,35.9696887,True,1408.0,0,True,G0046,3 Western canyon / Lake Mead,Canyon / Gorge
+2246,Burro Canyon,-113.0145708,36.251733,True,1198.0,0,True,G0258,2 Central Grand Canyon,Canyon / Gorge
+2247,Burro Canyon,-112.3490389,36.2443579,True,1396.0,0,True,G0080,2 Central Grand Canyon,Canyon / Gorge
+25439,Carbon Canyon,-111.8164954,36.1515953,True,1154.0,1070,False,G0206,2 Central Grand Canyon,Canyon / Gorge
+2459,Carbonate Canyon,-112.6977814,36.2554537,True,959.0,0,True,G0182,2 Central Grand Canyon,Canyon / Gorge
+20702,Cardenas Canyon,-111.8637631,36.0855333,True,1326.0,0,True,G0103,2 Central Grand Canyon,Canyon / Gorge
+1426377,Castle Cliff Wash,-113.9007987,36.9333105,True,651.0,51144,False,G0319,3 Western canyon / Lake Mead,"Wash, Valley, Draw, Hollow, other"
+27362,Cataract Canyon,-112.689747,36.2195599,True,857.0,0,True,G0259,2 Central Grand Canyon,Canyon / Gorge
+2797242,Cave Canyon,-111.5579237,36.8422277,True,796.0,33099,False,G0314,1 Marble Canyon (east),Canyon / Gorge
+2583,Cave Canyon,-113.9221801,36.0958861,True,1203.0,87,True,G0269,3 Western canyon / Lake Mead,Canyon / Gorge
+2616,Cedar Canyon,-111.6806003,36.0473063,True,696.0,2058,False,G0079,2 Central Grand Canyon,Canyon / Gorge
+2615,Cedar Canyon,-114.1101848,35.4817582,True,656.0,40045,False,G0204,3 Western canyon / Lake Mead,Canyon / Gorge
+2664,Cedar Pockets Wash,-113.7877417,36.9572007,True,965.0,50482,False,G0319,3 Western canyon / Lake Mead,"Wash, Valley, Draw, Hollow, other"
+2738,Chamberlain Canyon,-112.6523174,36.5096634,True,799.0,0,True,G0294,2 Central Grand Canyon,Canyon / Gorge
+2904,Chuar Valley,-111.8378319,36.1443356,True,1118.0,0,True,G0206,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+2995,Clay Tank Canyon,-113.6669911,35.8614246,True,1351.0,0,True,G0129,3 Western canyon / Lake Mead,Canyon / Gorge
+3218,Copper Canyon,-112.3724436,36.2426051,True,1380.0,0,True,G0152,2 Central Grand Canyon,Canyon / Gorge
+3289,Corral Canyon,-113.8559484,36.6531423,True,632.0,22332,False,G0319,3 Western canyon / Lake Mead,Canyon / Gorge
+3313,Cottonwood Canyon,-112.8897935,36.3306226,True,864.0,2331,False,G0318,2 Central Grand Canyon,Canyon / Gorge
+3428,Cove Canyon,-113.0150159,36.2392294,True,1407.0,0,True,G0258,2 Central Grand Canyon,Canyon / Gorge
+3442,Cow Canyon,-113.934262,36.6059207,True,830.0,24315,False,G0319,3 Western canyon / Lake Mead,Canyon / Gorge
+3554,Crazy Jug Canyon,-112.3889641,36.3818404,True,1038.0,0,True,G0272,2 Central Grand Canyon,Canyon / Gorge
+3698,Dansill Canyon,-113.4069395,36.1950726,True,981.0,488,True,G0291,2 Central Grand Canyon,Canyon / Gorge
+42783,Diamond Canyon,-113.3726694,35.7663003,True,1288.0,0,True,G0084,2 Central Grand Canyon,Canyon / Gorge
+3957,Dinner Pockets Canyon,-112.6311708,36.5718706,True,660.0,0,True,G0271,2 Central Grand Canyon,Canyon / Gorge
+4103,Driftwood Canyon,-112.6449748,36.138594,True,724.0,1026,False,G0285,2 Central Grand Canyon,Canyon / Gorge
+4133,Dry Canyon,-113.7860908,36.0289289,True,1404.0,0,True,G0038,3 Western canyon / Lake Mead,Canyon / Gorge
+4217,Dutton Canyon,-112.3870282,36.280494,True,773.0,0,True,G0117,2 Central Grand Canyon,Canyon / Gorge
+4422,Elves Chasm,-112.450489,36.197409,True,1280.0,528,False,G0133,2 Central Grand Canyon,Canyon / Gorge
+24056,Emerald Canyon,-112.3087144,36.1799949,True,1355.0,0,True,G0157,2 Central Grand Canyon,Canyon / Gorge
+4541,Fall Canyon,-113.3266824,35.9331485,True,1497.0,404,True,G0309,2 Central Grand Canyon,Canyon / Gorge
+4573,Fern Glen Canyon,-112.9186736,36.2593035,True,1296.0,0,True,G0247,2 Central Grand Canyon,Canyon / Gorge
+23854,Ferry Swale Canyon,-111.5240551,36.900269,True,675.0,43882,False,G0314,1 Marble Canyon (east),Canyon / Gorge
+4595,Figure Four Canyon,-113.8700005,36.8891368,True,642.0,41392,False,G0319,3 Western canyon / Lake Mead,Canyon / Gorge
+4637,Fishtail Canyon,-112.5546455,36.4005971,True,1281.0,42,True,G0257,2 Central Grand Canyon,Canyon / Gorge
+4738,Forster Canyon,-112.5191183,36.2458875,True,1275.0,0,True,G0277,2 Central Grand Canyon,Canyon / Gorge
+4767,Fossil Canyon,-112.5248755,36.2712681,True,1285.0,0,True,G0191,2 Central Grand Canyon,Canyon / Gorge
+4915,Galloway Canyon,-112.4538758,36.34391,True,1433.0,0,True,G0186,2 Central Grand Canyon,Canyon / Gorge
+4955,Garnet Canyon,-112.4238538,36.2133741,True,1301.0,0,True,G0152,2 Central Grand Canyon,Canyon / Gorge
+4969,Gawain Abyss,-112.2789371,36.2379719,True,1029.0,0,True,G0151,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+1428200,Glen Canyon,-111.5880874,36.8651055,True,778.0,38514,False,G0314,1 Marble Canyon (east),Canyon / Gorge
+22951,Gneiss Canyon,-113.5313813,35.7812307,True,1308.0,0,True,G0173,3 Western canyon / Lake Mead,Canyon / Gorge
+5088,Gods Pocket,-113.9650062,36.1906844,True,1059.0,6784,False,G0236,3 Western canyon / Lake Mead,"Wash, Valley, Draw, Hollow, other"
+5205,Grama Canyon,-112.6481374,36.5634872,True,692.0,1671,False,G0271,2 Central Grand Canyon,Canyon / Gorge
+5227,Grand Wash Canyon,-114.004671,36.1952534,True,1148.0,8405,False,G0269,3 Western canyon / Lake Mead,Canyon / Gorge
+23922,Grand Wash Valley,-114.0048755,36.2569203,True,1117.0,9434,False,G0221,3 Western canyon / Lake Mead,"Wash, Valley, Draw, Hollow, other"
+5250,Granite Park Canyon,-113.3141925,35.9679246,True,1526.0,0,True,G0309,2 Central Grand Canyon,Canyon / Gorge
+5256,Granite Spring Canyon,-113.3304246,35.8247439,True,1354.0,0,True,G0126,2 Central Grand Canyon,Canyon / Gorge
+5268,Grapevine Canyon,-114.0161856,36.0498019,True,879.0,4216,False,G0269,3 Western canyon / Lake Mead,Canyon / Gorge
+5361,Green Spring Canyon,-113.5602222,35.9795038,True,916.0,0,True,G0288,3 Western canyon / Lake Mead,Canyon / Gorge
+5463,Hack Canyon,-112.6507057,36.551227,True,716.0,0,True,G0130,2 Central Grand Canyon,Canyon / Gorge
+5508,Hakatai Canyon,-112.3845299,36.2447914,True,1359.0,0,True,G0167,2 Central Grand Canyon,Canyon / Gorge
+42725,Hance Canyon,-111.9521945,36.0454312,True,1464.0,0,True,G0192,2 Central Grand Canyon,Canyon / Gorge
+5613,Haunted Canyon,-112.121079,36.1450143,True,1026.0,0,True,G0041,2 Central Grand Canyon,Canyon / Gorge
+5616,Havasu Canyon,-112.7630891,36.3077919,True,1237.0,0,True,G0316,2 Central Grand Canyon,Canyon / Gorge
+20794,Havatagvitch Canyon,-112.6120012,36.1314768,True,692.0,0,True,G0144,2 Central Grand Canyon,Canyon / Gorge
+5707,Hells Canyon,-113.4084831,35.6850493,True,867.0,514,False,G0183,2 Central Grand Canyon,Canyon / Gorge
+5708,Hells Canyon,-113.9592657,35.7345103,True,829.0,14558,False,G0074,3 Western canyon / Lake Mead,Canyon / Gorge
+5716,Hells Hollow,-113.2411244,36.2675221,True,835.0,5725,False,G0278,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+5717,Hells Hollow,-113.1239602,36.1703046,True,1539.0,0,True,G0286,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+5757,Hidden Canyon,-113.7769431,36.5380022,True,801.0,1857,False,G0319,3 Western canyon / Lake Mead,Canyon / Gorge
+5964,Horse Flat Canyon,-113.714249,35.885587,True,1358.0,0,True,G0014,3 Western canyon / Lake Mead,Canyon / Gorge
+5997,Horse Spring Canyon,-113.5166496,35.9910808,True,873.0,0,True,G0320,3 Western canyon / Lake Mead,Canyon / Gorge
+6045,Hotauta Canyon,-112.3380741,36.2303797,True,1394.0,0,True,G0065,2 Central Grand Canyon,Canyon / Gorge
+6059,House Rock Valley,-111.7447217,36.6733257,True,1040.0,13206,False,G0314,1 Marble Canyon (east),"Wash, Valley, Draw, Hollow, other"
+6079,Hualapai Canyon,-112.6909668,36.2190594,True,857.0,0,True,G0259,2 Central Grand Canyon,Canyon / Gorge
+6118,Hundred and Fifty Mile Canyon,-112.694122,36.3554723,True,1221.0,0,True,G0307,2 Central Grand Canyon,Canyon / Gorge
+6119,Hundred and Forty Mile Canyon,-112.5673565,36.3982997,True,1267.0,404,True,G0321,2 Central Grand Canyon,Canyon / Gorge
+6120,Hundred and Ninetyfour Mile Canyon,-113.2615266,36.0884134,True,1550.0,0,True,G0208,2 Central Grand Canyon,Canyon / Gorge
+6123,Hundred and Ninetytwo Mile Canyon,-113.2192558,36.0966385,True,1563.0,854,False,G0211,2 Central Grand Canyon,Canyon / Gorge
+6200,Indian Canyon,-113.3418675,35.9892025,True,1534.0,0,True,G0127,2 Central Grand Canyon,Canyon / Gorge
+6213,Indian Hollow,-112.5925679,36.5022012,True,752.0,0,True,G0282,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+6324,Jackson Canyon,-113.7329427,35.9388652,True,1379.0,0,True,G0067,3 Western canyon / Lake Mead,Canyon / Gorge
+6379,Jeff Canyon,-113.7894268,35.9408444,True,1113.0,0,True,G0044,3 Western canyon / Lake Mead,Canyon / Gorge
+6532,Jump Canyon,-113.7578207,36.5467449,True,733.0,8782,False,G0319,3 Western canyon / Lake Mead,Canyon / Gorge
+6534,Jumpup Canyon,-112.6276043,36.4870082,True,836.0,0,True,G0222,2 Central Grand Canyon,Canyon / Gorge
+6596,Kanab Canyon,-112.2686964,36.2849761,True,992.0,0,True,G0121,2 Central Grand Canyon,Canyon / Gorge
+6601,Kanabownits Canyon,-112.259929,36.2462156,True,901.0,0,True,G0151,2 Central Grand Canyon,Canyon / Gorge
+6787,Kwagunt Canyon,-111.8299379,36.2614109,True,1129.0,0,True,G0128,1 Marble Canyon (east),Canyon / Gorge
+6785,Kwagunt Hollow,-112.5866575,36.5102437,True,756.0,943,False,G0282,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+6911,Lava Canyon,-111.8170535,36.1396653,True,1170.0,463,True,G0206,2 Central Grand Canyon,Canyon / Gorge
+6925,Lawson Canyon,-112.6503687,36.5496369,True,716.0,0,True,G0303,2 Central Grand Canyon,Canyon / Gorge
+6952,Lee Canyon,-112.6502877,36.1854,True,768.0,942,False,G0182,2 Central Grand Canyon,Canyon / Gorge
+6951,Lee Canyon,-111.6917784,35.9700222,True,705.0,2442,False,G0192,2 Central Grand Canyon,Canyon / Gorge
+7095,Little Colorado River Gorge,-111.7992612,36.1923911,True,1131.0,699,False,G0256,2 Central Grand Canyon,Canyon / Gorge
+7100,Little Coyote Canyon,-112.7512957,36.2514014,True,916.0,0,True,G0194,2 Central Grand Canyon,Canyon / Gorge
+20867,Little Nankoweap Canyon,-111.8648414,36.3091185,True,1153.0,0,True,G0113,1 Marble Canyon (east),Canyon / Gorge
+7324,Lonetree Canyon,-112.0319687,36.0799677,True,1469.0,0,True,G0030,2 Central Grand Canyon,Canyon / Gorge
+7618,Malgosa Canyon,-111.8261185,36.2436915,True,1138.0,0,True,G0135,1 Marble Canyon (east),Canyon / Gorge
+7773,Matkatamiba Canyon,-112.6725822,36.3440703,True,1226.0,295,True,G0216,2 Central Grand Canyon,Canyon / Gorge
+7881,Meriwhitica Canyon,-113.6558059,35.7963902,True,1201.0,0,True,G0155,3 Western canyon / Lake Mead,Canyon / Gorge
+7884,Merlin Abyss,-112.2911841,36.2729776,True,1081.0,0,True,G0156,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+8052,Milkweed Canyon,-113.6168859,35.7233333,True,959.0,28,True,G0322,3 Western canyon / Lake Mead,Canyon / Gorge
+8098,Mineral Canyon,-111.9392954,36.0447494,True,1464.0,0,True,G0217,2 Central Grand Canyon,Canyon / Gorge
+8156,Modred Abyss,-112.2910532,36.2727128,True,1081.0,0,True,G0121,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+8179,Mohawk Canyon,-112.9661993,36.233625,True,1360.0,0,True,G0301,2 Central Grand Canyon,Canyon / Gorge
+8273,Moqui Trail Canyon,-112.5923069,36.0802103,True,642.0,0,True,G0240,2 Central Grand Canyon,Canyon / Gorge
+8344,Muav Canyon,-112.3262787,36.2746719,True,1153.0,0,True,G0156,2 Central Grand Canyon,Canyon / Gorge
+8488,Nankoweap Canyon,-111.85971,36.3048288,True,1156.0,0,True,G0193,1 Marble Canyon (east),Canyon / Gorge
+8505,Natch Canyon,-111.9057618,36.1662292,True,854.0,0,True,G0206,2 Central Grand Canyon,Canyon / Gorge
+8508,National Canyon,-112.8926097,36.2572824,True,1285.0,0,True,G0297,2 Central Grand Canyon,Canyon / Gorge
+2500811,Nautiloid Canyon,-111.8403008,36.4705245,True,1089.0,3690,False,G0059,1 Marble Canyon (east),Canyon / Gorge
+8682,Nodman Canyon,-114.1131868,35.4875462,True,674.0,39822,False,G0204,3 Western canyon / Lake Mead,Canyon / Gorge
+8709,North Canyon,-111.7641221,36.6296342,True,1069.0,5676,False,G0314,1 Marble Canyon (east),Canyon / Gorge
+8908,Obi Canyon,-112.0080771,36.1236836,True,1129.0,0,True,G0037,2 Central Grand Canyon,Canyon / Gorge
+8985,Olo Canyon,-112.6494764,36.370794,True,1210.0,0,True,G0262,2 Central Grand Canyon,Canyon / Gorge
+9204,Parashant Canyon,-113.3226988,36.0945547,True,1543.0,0,True,G0209,2 Central Grand Canyon,Canyon / Gorge
+9209,Paria Canyon,-111.5925621,36.8655949,True,778.0,38365,False,G0314,1 Marble Canyon (east),Canyon / Gorge
+9212,Parissawampitts Canyon,-112.3928818,36.406949,True,666.0,1121,False,G0272,2 Central Grand Canyon,Canyon / Gorge
+9280,Peach Springs Canyon,-113.3612333,35.7579447,True,1227.0,0,True,G0099,2 Central Grand Canyon,Canyon / Gorge
+9291,Pearce Canyon,-113.971019,36.1432959,True,1177.0,0,True,G0236,3 Western canyon / Lake Mead,Canyon / Gorge
+20952,Phantom Canyon,-112.0871999,36.1158958,True,1361.0,0,True,G0024,2 Central Grand Canyon,Canyon / Gorge
+9411,Pigeon Canyon,-113.8373296,36.290128,True,720.0,0,True,G0098,3 Western canyon / Lake Mead,Canyon / Gorge
+9451,Pine Canyon,-114.242142,35.5760311,True,623.0,41356,False,G0074,3 Western canyon / Lake Mead,Canyon / Gorge
+9767,Price Canyon,-113.4236446,35.9476583,True,857.0,0,True,G0136,2 Central Grand Canyon,Canyon / Gorge
+9787,Prospect Canyon,-113.0817017,36.1968268,True,1471.0,1857,False,G0266,2 Central Grand Canyon,Canyon / Gorge
+9792,Prospect Valley,-113.0789937,36.1785764,True,1044.0,2119,False,G0312,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+9818,Purgatory Canyon,-113.7095613,36.9728082,True,629.0,43323,False,G0319,3 Western canyon / Lake Mead,Canyon / Gorge
+9822,Putesoy Canyon,-112.6647451,36.1935371,True,786.0,0,True,G0182,2 Central Grand Canyon,Canyon / Gorge
+9827,Pymn Canyon,-113.3840613,36.298521,True,789.0,376,True,G0278,2 Central Grand Canyon,Canyon / Gorge
+9860,Quartermaster Canyon,-113.7594478,35.967066,True,1403.0,0,True,G0042,3 Western canyon / Lake Mead,Canyon / Gorge
+9972,Rattlesnake Canyon,-112.6471881,36.1865741,True,768.0,1588,False,G0259,2 Central Grand Canyon,Canyon / Gorge
+10020,Red Canyon,-111.9205937,36.0448226,True,1468.0,0,True,G0198,2 Central Grand Canyon,Canyon / Gorge
+11730,Red Rock Canyon,-113.8930692,36.4180158,True,787.0,8927,False,G0221,3 Western canyon / Lake Mead,Canyon / Gorge
+10190,Redwall Canyon,-112.326019,36.2720308,True,1162.0,0,True,G0156,2 Central Grand Canyon,Canyon / Gorge
+10254,Rider Canyon,-111.740975,36.6738907,True,1040.0,9842,False,G0314,1 Marble Canyon (east),Canyon / Gorge
+10353,Roaring Springs Canyon,-112.0324105,36.1928716,True,971.0,0,True,G0019,2 Central Grand Canyon,Canyon / Gorge
+10574,Ruby Canyon,-112.3158848,36.1891342,True,1363.0,0,True,G0052,2 Central Grand Canyon,Canyon / Gorge
+10638,Saddle Canyon,-111.8909867,36.3678746,True,1136.0,693,False,G0035,1 Marble Canyon (east),Canyon / Gorge
+10640,Saddle Canyon,-112.3881999,36.3814371,True,1038.0,0,True,G0272,2 Central Grand Canyon,Canyon / Gorge
+10643,Saddle Horse Canyon,-113.0440807,36.2224523,True,1428.0,0,True,G0258,2 Central Grand Canyon,Canyon / Gorge
+10773,Salt Trail Canyon,-111.7092324,36.1844282,True,896.0,0,True,G0293,2 Central Grand Canyon,Canyon / Gorge
+10959,Sapphire Canyon,-112.2915548,36.1464691,True,1310.0,550,False,G0075,2 Central Grand Canyon,Canyon / Gorge
+24092,Schoolhouse Canyon,-112.6898588,36.2374485,True,876.0,0,True,G0182,2 Central Grand Canyon,Canyon / Gorge
+11091,Separation Canyon,-113.6000967,35.7858424,True,673.0,0,True,G0108,3 Western canyon / Lake Mead,Canyon / Gorge
+11093,Serpentine Canyon,-112.328287,36.2057849,True,1377.0,0,True,G0032,2 Central Grand Canyon,Canyon / Gorge
+11364,Sinyella Canyon,-112.720803,36.32196,True,1245.0,331,True,G0216,2 Central Grand Canyon,Canyon / Gorge
+11392,Sixtymile Canyon,-111.8101283,36.2140546,True,1122.0,448,True,G0206,1 Marble Canyon (east),Canyon / Gorge
+11491,Snap Canyon,-113.9658423,36.1539312,True,1174.0,912,False,G0236,3 Western canyon / Lake Mead,Canyon / Gorge
+11578,South Canyon,-111.8577664,36.5033649,True,1102.0,6004,False,G0059,1 Marble Canyon (east),Canyon / Gorge
+11656,Sowats Canyon,-112.5804495,36.5199627,True,710.0,1356,False,G0222,2 Central Grand Canyon,Canyon / Gorge
+11667,Specter Chasm,-112.4793543,36.3149643,True,1351.0,0,True,G0191,2 Central Grand Canyon,Canyon / Gorge
+11670,Spencer Canyon,-113.6480242,35.8239494,True,1346.0,0,True,G0197,3 Western canyon / Lake Mead,Canyon / Gorge
+11696,Spring Canyon,-114.1634994,36.0243545,True,1023.0,16508,False,G0210,3 Western canyon / Lake Mead,Canyon / Gorge
+11697,Spring Canyon,-113.3513549,36.0193161,True,1535.0,672,False,G0245,2 Central Grand Canyon,Canyon / Gorge
+11763,Stairway Canyon,-112.9607599,36.2372851,True,1356.0,30,True,G0258,2 Central Grand Canyon,Canyon / Gorge
+11839,Stina Canyon,-112.3833649,36.3767083,True,1023.0,0,True,G0272,2 Central Grand Canyon,Canyon / Gorge
+11897,Straight Canyon,-111.6835338,36.0920738,True,739.0,1104,False,G0195,2 Central Grand Canyon,Canyon / Gorge
+11935,Sullivans Canyon,-113.8185311,36.9392983,True,993.0,34388,False,G0319,3 Western canyon / Lake Mead,Canyon / Gorge
+12013,Surprise Canyon,-113.66202,35.85448,True,1338.0,0,True,G0093,3 Western canyon / Lake Mead,Canyon / Gorge
+12142,Tank Canyon,-113.9206078,36.3726032,True,867.0,5779,False,G0221,3 Western canyon / Lake Mead,Canyon / Gorge
+12162,Tanner Canyon,-111.8324417,36.1021485,True,1241.0,0,True,G0097,2 Central Grand Canyon,Canyon / Gorge
+12296,The Box,-112.0858132,36.1150068,True,1361.0,0,True,G0012,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+12337,The Inferno,-112.1629515,36.0897743,True,1180.0,0,True,G0231,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+12354,The Narrows,-113.8641936,36.9185318,True,827.0,47195,False,G0319,3 Western canyon / Lake Mead,"Wash, Valley, Draw, Hollow, other"
+12382,The Transept,-112.039969,36.1717546,True,1125.0,0,True,G0012,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+12429,Three Springs Canyon,-113.3087303,35.8856607,True,1453.0,0,True,G0265,2 Central Grand Canyon,Canyon / Gorge
+44806,Timp Canyon,-112.3880114,36.3887887,True,949.0,0,True,G0272,2 Central Grand Canyon,Canyon / Gorge
+12492,Tincanebitts Canyon,-113.779532,36.0173645,True,1406.0,0,True,G0038,3 Western canyon / Lake Mead,Canyon / Gorge
+12508,Tipton Canyon,-114.1081627,35.5401679,True,750.0,35871,False,G0204,3 Western canyon / Lake Mead,Canyon / Gorge
+12625,Topaz Canyon,-112.2407559,36.1105045,True,1230.0,0,True,G0005,2 Central Grand Canyon,Canyon / Gorge
+12645,Toroweap Valley,-113.0875586,36.2166388,True,690.0,1027,False,G0290,2 Central Grand Canyon,"Wash, Valley, Draw, Hollow, other"
+12669,Trail Canyon,-113.3277893,35.8386713,True,1366.0,0,True,G0292,2 Central Grand Canyon,Canyon / Gorge
+12668,Trail Canyon,-113.3345562,36.2767276,True,895.0,0,True,G0278,2 Central Grand Canyon,Canyon / Gorge
+12693,Travertine Canyon,-113.4247817,35.7509561,True,1283.0,400,True,G0132,2 Central Grand Canyon,Canyon / Gorge
+12692,Travertine Canyon,-112.2189362,36.102883,True,1318.0,0,True,G0034,2 Central Grand Canyon,Canyon / Gorge
+12810,Tuckup Canyon,-112.8745439,36.2801388,True,1278.0,0,True,G0109,2 Central Grand Canyon,Canyon / Gorge
+12849,Tunnel Canyon,-112.6466724,36.133355,True,711.0,845,False,G0285,2 Central Grand Canyon,Canyon / Gorge
+12895,Turquoise Canyon,-112.3027627,36.152924,True,1322.0,0,True,G0096,2 Central Grand Canyon,Canyon / Gorge
+21090,Twentynine Mile Canyon,-111.8332783,36.5301669,True,1078.0,3575,False,G0314,1 Marble Canyon (east),Canyon / Gorge
+12939,Twin Creek Canyon,-113.5728492,36.0552775,True,634.0,0,True,G0219,3 Western canyon / Lake Mead,Canyon / Gorge
+449,Twin Spring Canyon,-113.5601725,35.9798331,True,916.0,0,True,G0219,3 Western canyon / Lake Mead,Canyon / Gorge
+12988,Two Hundred and Ninemile Canyon,-113.3186969,35.9692211,True,1529.0,0,True,G0123,2 Central Grand Canyon,Canyon / Gorge
+12989,Two Hundred and Seventeenmile Canyon,-113.3110053,35.8598865,True,1422.0,0,True,G0201,2 Central Grand Canyon,Canyon / Gorge
+434,Two Hundred and Twentyeightmile Canyon,-113.4064923,35.7519677,True,1273.0,0,True,G0099,2 Central Grand Canyon,Canyon / Gorge
+12995,Two Hundred and Twentyfour Mile Canyon,-113.344689,35.784756,True,1293.0,0,True,G0124,2 Central Grand Canyon,Canyon / Gorge
+12997,Two Hundred and Twentymile Canyon,-113.3273037,35.8315851,True,1366.0,0,True,G0251,2 Central Grand Canyon,Canyon / Gorge
+453,Walthenberg Canyon,-112.4060764,36.2392533,True,1345.0,0,True,G0117,2 Central Grand Canyon,Canyon / Gorge
+2807031,Water Holes Canyon,-111.54312,36.8502,True,787.0,37733,False,G0314,1 Marble Canyon (east),Canyon / Gorge
+13396,Waterhole Canyon,-111.653246,36.0783239,True,695.0,4859,False,G0203,2 Central Grand Canyon,Canyon / Gorge
+13500,West Fork Separation Canyon,-113.5443644,35.8574501,True,1202.0,0,True,G0108,3 Western canyon / Lake Mead,Canyon / Gorge
+13721,Whitmore Canyon,-113.2028962,36.1450734,True,1572.0,628,False,G0207,2 Central Grand Canyon,Canyon / Gorge
+13822,Willow Canyon,-112.9225209,36.2745589,True,1079.0,0,True,G0247,2 Central Grand Canyon,Canyon / Gorge
+14125,Yunosi Canyon,-112.7587603,36.2168102,True,657.0,0,True,G0246,2 Central Grand Canyon,Canyon / Gorge
+14140,Zoroaster Canyon,-112.0443857,36.0858403,True,1464.0,0,True,G0057,2 Central Grand Canyon,Canyon / Gorge

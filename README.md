@@ -44,6 +44,7 @@
 | Sentinel-2 Level-2A (bands B02, B03, B04), 10 m | ESA Copernicus via Microsoft Planetary Computer, STAC collection `sentinel-2-l2a` | Training: 20 June 2026. App and catalogue: clearest scene in 15 May – 31 Aug 2026 (also 2025, 2024), cloud < 10 % | Copernicus Sentinel data, free and open. *Contains modified Copernicus Sentinel data 2026.* |
 | Elevation, 10 m and 1 arc-second | USGS 3D Elevation Program via Microsoft Planetary Computer, collection `3dep-seamless` (`gsd` = 10 and 30) | Current seamless product | Public domain (USGS) |
 | Geology | USGS State Geologic Map Compilation (SGMC), ScienceBase FeatureServer layer 3 | — | Public domain (USGS) |
+| Canyon names (validation only) | USGS Geographic Names Information System, `DomesticNames_AZ_Text.zip` (feature class `Valley`) | Downloaded November 2026 | Public domain (USGS) |
 | Mars elevation, 200 m | USGS Astrogeology, *Mars MGS MOLA – MEX HRSC Blended DEM Global 200m v2* (Fergason, Hare & Laura, 2018) | — | MOLA CC0; HRSC CC BY-SA 3.0 IGO |
 | Basemap tiles (app only) | Esri World Imagery | — | Esri terms of use; attribution shown in the map |
 | Photos and videos (app home page) | Wikimedia Commons, filtered to CC0, CC BY, CC BY-SA and public domain | — | Credited on each item |
@@ -86,6 +87,17 @@ All rules are written in units of **D**, the main-canyon depth (99.5th percentil
 | v2 | Zone 1 | 0.907 | 0.726 | 0.676 | 0.75 |
 | v1 | Lava Falls | — | — | 0.360 | — |
 | v2 | Lava Falls | 0.790 | 0.599 | 0.516 | 0.679 |
+
+**Independent check with official names (USGS GNIS).** GNIS lists 208 named valleys whose mouths lie inside the deep main canyon (at least 0.5 D = 614 m below the plateau), i.e. named tributaries of the Grand Canyon. These names were never used in training. A canyon counts as found when a detection lies within 500 m of its mouth-to-head line.
+
+| Reach of the river | Named canyons (Canyon / Gorge) | Found | Recall |
+|---|---|---|---|
+| Central Grand Canyon (training region) | 123 | 102 | **82.9 %** |
+| Western canyon / Lake Mead | 43 | 23 | 53.5 % |
+| Marble Canyon (narrow, east) | 20 | 5 | 25.0 % |
+| **All named canyons** | **186** | **130** | **69.9 %** |
+
+All 208 named valleys including washes and draws: 140 found (67.3 %); 63.0 % within 250 m, 78.4 % within 2 km. 108 of the 325 catalogue canyons received their official name (`results/grand_canyon/grand_canyon_detections_named.geojson`), and the app names live detections the same way. The drop in Marble Canyon and the west matches the Lava Falls test: the model is strongest where it was trained. Code: `notebooks/gnis_validation.ipynb`.
 
 Model v2 generalises much better to the western Grand Canyon (Lava Falls IoU 0.36 → 0.52) at a small cost in the pilot test zone. **Catalogue:** 325 tributary canyons, 2,397 km², mean confidence 0.33 (`results/grand_canyon/`). It is an experimental product, not a complete inventory.
 
@@ -154,6 +166,7 @@ python scripts/example_detection.py
 |---|---|---|
 | `notebooks/earth_pipeline.ipynb` | Data download, labels, dataset, training (v1, v2), evaluation, full-canyon run, geology | Several hours on a Colab T4 |
 | `notebooks/mars_analog.ipynb` | Earth and Mars elevation models, calibration, tributary extraction, statistics | About 30 minutes (High-RAM) |
+| `notebooks/gnis_validation.ipynb` | Independent check against USGS GNIS names, error analysis by reach | 2 minutes |
 | `scripts/prepare_app_data.py` | Makes the light geology and Mars files the app reads | 1 minute |
 
 Large intermediate files (imagery, DEMs, tiles, the 349 MB Mars raster) are rebuilt by the notebooks from the public sources above and are not stored in GitHub.
@@ -171,6 +184,7 @@ data/processed/            stretch_settings.json (reflectance limits used by tra
 data/sample_input/         Exact identifiers of the example inputs
 annotations/               Reviewed reference polygons and annotation zones (EPSG:32612)
 results/                   Small final outputs used by the app and shown in this README
+results/gnis_validation/   Independent check against official USGS GNIS canyon names
 notebooks/                 Full Earth pipeline and Earth vs Mars analysis
 scripts/                   Example run and app-data preparation
 assets/                    Hero image and media list for the home page
@@ -181,7 +195,7 @@ assets/                    Hero image and media list for the home page
 ## 7. Limitations
 
 - Test samples are small, and pixel metrics measure canyon *terrain* better than the separation of individual canyons (only 2 of 10 manually drawn canyons matched at IoU 0.5).
-- The model was trained on Grand Canyon rocks and colours; it is not expected to work in other landscapes without new training samples.
+- The model was trained on Grand Canyon rocks and colours; it is not expected to work in other landscapes without new training samples. Inside the Grand Canyon it is weakest in narrow Marble Canyon (25 % of named canyons found).
 - The catalogue is experimental and incomplete; confidence scores are not calibrated probabilities.
 - SGMC geology is regional (about 1 : 1,000,000); most detections fall in broad sedimentary units.
 - Earth vs Mars uses 200 m elevation data, one Earth reference canyon and an incomplete calibration catalogue; the Mars grid has up to about 4 % east–west scale error at its edges; gravity differences were not modelled.
