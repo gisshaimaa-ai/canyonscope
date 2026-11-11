@@ -59,6 +59,10 @@ ENTRIES = [
      'A tributary (side) canyon joins the main canyon, and its water flows into the main river. In this project it needs at least 250 m of relief and 1 km² of area.',
      'الأخدود الجانبي (الرافد) هو أخدود يتصل بالأخدود الرئيسي، وتجري مياهه إلى النهر الرئيسي. في هذا المشروع يجب أن يكون فرق ارتفاعه 250 متراً على الأقل ومساحته 1 كم² على الأقل.',
      'tributary side canyon definition meaning رافد روافد جانبي تعريف معنى'),
+    ('What is a canyon?', 'ما هو الأخدود؟',
+     'A canyon is a deep valley with steep, often rocky walls, usually cut by a river over a very long time. It is deep compared with its width. The Grand Canyon is about 1.2 km deep; Valles Marineris on Mars is about 9 km deep. See the Learn page.',
+     'الأخدود وادٍ عميق جدرانه شديدة الانحدار وغالباً صخرية، يحفره نهر في الغالب على مدى زمن طويل جداً، ويكون عميقاً مقارنة بعرضه. عمق Grand Canyon حوالي 1.2 كم، وعمق Valles Marineris على المريخ حوالي 9 كم. شاهد صفحة Learn.',
+     'canyon gorge definition meaning اخدود اخاديد تعريف معنى'),
     ('Canyon or valley: what is the difference?', 'ما الفرق بين الوادي والأخدود؟',
      'Every canyon is a valley, but not every valley is a canyon. A canyon is deep and steep compared with its width; a valley is often wide with gentle slopes. See the Learn page.',
      'كل أخدود هو وادٍ، لكن ليس كل وادٍ أخدوداً. الأخدود عميق وجدرانه شديدة الانحدار مقارنة بعرضه، أما الوادي فغالباً عريض ومنحدراته خفيفة. شاهد صفحة Learn.',
@@ -141,7 +145,7 @@ SMALL_TALK = [
 ]
 
 ARABIC = re.compile(r'[\u0600-\u06FF]')
-PREFIXES = ('وال', 'بال', 'فال', 'كال', 'لل', 'ال', 'و', 'ب', 'ل', 'ف')
+PREFIXES = ('وال', 'بال', 'فال', 'كال', 'لل', 'ال')   # single letters (و ب ل ف) are often part of the word
 ARABIC_STOP = {'من', 'في', 'على', 'ما', 'ماذا', 'هل', 'هو', 'هي', 'عن', 'الى', 'لي', 'لنا', 'ان', 'هذا', 'هذه', 'يمكنك',
                'ممكن', 'تقوم', 'شرح', 'اشرح', 'لو', 'سمحت', 'عندك', 'انت', 'مع'}
 
@@ -162,8 +166,12 @@ def normalise(text):
     return ' '.join(words)
 
 
+# Changes whenever the questions change, so a cached search index is never reused for a different list
+ENTRIES_SIGNATURE = str(hash(tuple(entry[0] for entry in ENTRIES)))
+
+
 @st.cache_resource(show_spinner=False)
-def search_index():
+def search_index(signature=None):
     from sklearn.feature_extraction.text import TfidfVectorizer
     curated = [f'{q_en} {q_ar} {extra}' for q_en, q_ar, _, _, extra in ENTRIES]
     full = [f'{q_en} {q_ar} {extra} {a_en} {a_ar}' for q_en, q_ar, a_en, a_ar, extra in ENTRIES]
@@ -175,7 +183,7 @@ def search_index():
 def closest_entry(text):
     """Index of the entry closest to a typed question, or None when nothing is close enough."""
     from sklearn.metrics.pairwise import cosine_similarity
-    words, word_matrix, chars, char_matrix = search_index()
+    words, word_matrix, chars, char_matrix = search_index(ENTRIES_SIGNATURE)
     scores = (0.75 * cosine_similarity(words.transform([text]), word_matrix)[0]
               + 0.25 * cosine_similarity(chars.transform([text]), char_matrix)[0])
     best = int(scores.argmax())
@@ -185,7 +193,7 @@ def closest_entry(text):
 def project_match(text):
     """(index, score) of the closest project question."""
     from sklearn.metrics.pairwise import cosine_similarity
-    words, word_matrix, chars, char_matrix = search_index()
+    words, word_matrix, chars, char_matrix = search_index(ENTRIES_SIGNATURE)
     scores = (0.75 * cosine_similarity(words.transform([text]), word_matrix)[0]
               + 0.25 * cosine_similarity(chars.transform([text]), char_matrix)[0])
     best = int(scores.argmax())
@@ -194,10 +202,10 @@ def project_match(text):
 
 # Words that show a question is about this project rather than general knowledge
 PROJECT_MARKERS = ('canyonscope', 'project', 'your', 'you ', 'app', 'rova', 'train', 'accura', 'iou', 'yolo',
-                   'challenge', 'limit', 'goal', 'code', 'github', 'data', 'how many', 'difference', 'next', 'found',
+                   'challenge', 'limit', 'goal', 'code', 'github', 'data', 'how many', 'next', 'found',
                    'find', 'catalog', 'compare', 'user', 'problem', 'model',
                    'مشروع', 'تطبيق', 'نموذج', 'درب', 'دقه', 'تحدي', 'قيود', 'حدود', 'اهداف', 'هدف', 'كود', 'بيانات',
-                   'عدد', 'فرق', 'قادم', 'وجدت', 'كتالوج', 'مقارن', 'مستفيد', 'مشكل', 'يولو', 'روفا')
+                   'عدد', 'قادم', 'وجدت', 'كتالوج', 'مقارن', 'مستفيد', 'مشكل', 'يولو', 'روفا')
 
 # Wikipedia answers are kept only when the article is about one of these subjects
 TOPIC_WORDS = ('space', 'planet', 'mars', 'martian', 'moon', 'sun', 'solar', 'star', 'galaxy', 'galaxies', 'astronomy',
@@ -279,40 +287,145 @@ def wikipedia_get(base, params):
     raise ConnectionError('Wikipedia not reachable')
 
 
-def wikipedia_answer(question, language):
-    """Search Wikipedia in the question's language; return the first on-topic article summary, or None.
-    One API call returns the top articles with their short description and plain-text introduction.
-    An article counts as on topic when its title, short description or first sentence is about space, geology,
-    geography or AI (or when the question itself is, and the article's opening agrees)."""
-    query = QUESTION_WORDS.sub('', question).strip(' ?؟!.') or question
-    base = f'https://{language}.wikipedia.org'
-    data = wikipedia_get(base, {'action': 'query', 'format': 'json', 'formatversion': 2, 'generator': 'search',
-                                'gsrsearch': query, 'gsrlimit': 4, 'prop': 'extracts|description|info',
-                                'exintro': 1, 'explaintext': 1, 'exlimit': 4, 'inprop': 'url', 'redirects': 1})
-    pages = sorted(data.get('query', {}).get('pages', []), key=lambda page: page.get('index', 99))
-    question_on_topic = on_topic(question)
-    for page in pages:
-        title = page.get('title', '')
-        description = page.get('description', '')
-        extract = re.sub(r'\s+', ' ', (page.get('extract') or '')).strip()
-        if len(extract) < 40 or 'may refer to' in extract[:200] or 'قد يشير' in extract[:200]:
-            continue   # empty or disambiguation page
-        sentence = first_sentence(extract)
-        opening = f'{title} {description} {sentence}'
-        definition = f"{before_location(description)} {before_location(' '.join(sentence.split()[:15]))}"
-        if on_topic(opening, places=False) or on_topic(definition) or \
-                (question_on_topic and on_topic(extract[:600], places=False)):
-            if len(extract) > 600:
-                cut = max(extract.rfind('. ', 0, 600), extract.rfind('.', 0, 600))
-                extract = extract[:cut + 1] if cut > 200 else extract[:600] + '…'
-            return {'title': title, 'extract': extract,
-                    'url': page.get('fullurl', f"{base}/wiki/{urllib.parse.quote(title.replace(' ', '_'))}")}
+# Articles about films, books, songs, stories or religious texts are never used, even when their title matches
+NOT_SCIENCE = re.compile(r'\b(film|movie|novel|book|song|album|band|video game|television|tv series|episode|character|'
+                         r'comic|manga|anime|opera|musical|play by|story)\b|فيلم|روايه|كتاب|اغنيه|البوم|مسلسل|شخصيه|قصه|'
+                         r'سوره|قران|حديث نبوي|مسرحيه|لعبه فيديو', re.I)
+QUERY_STOP = {'what', 'is', 'are', 'the', 'a', 'an', 'of', 'on', 'in', 'how', 'why', 'does', 'do', 'and', 'between',
+              'different', 'difference', 'about', 'tell', 'me', 'explain', 'define', 'meaning', 'mean', 'from',
+              'far', 'much', 'many', 'did', 'was', 'were', 'which', 'with', 'for', 'its', 'their', 'this', 'that'}
+
+
+SINGULAR = {'براكين': 'بركان', 'كواكب': 'كوكب', 'نجوم': 'نجم', 'جبال': 'جبل', 'انهار': 'نهر', 'صخور': 'صخر',
+            'زلازل': 'زلزال', 'مجرات': 'مجره', 'اقمار': 'قمر', 'اخاديد': 'اخدود', 'اوديه': 'وادي', 'بحار': 'بحر',
+            'قارات': 'قاره', 'ثقوب': 'ثقب', 'سوداء': 'اسود', 'شبكات': 'شبكه', 'نيازك': 'نيزك', 'مذنبات': 'مذنب',
+            'volcanoes': 'volcano', 'planets': 'planet', 'canyons': 'canyon', 'galaxies': 'galaxy', 'stars': 'star',
+            'satellites': 'satellite', 'earthquakes': 'earthquake', 'rivers': 'river', 'mountains': 'mountain'}
+
+
+def query_words(query):
+    words = [w for w in normalise(query).split() if len(w) >= 3 and w not in QUERY_STOP]
+    return [SINGULAR.get(w, w) for w in words]
+
+
+def title_matches(title, words):
+    """At least one meaningful word of the question appears in the article title."""
+    title_words = normalise(title).split()
+    return any(t.startswith(w[:5]) or w.startswith(t[:5]) for w in words for t in title_words if len(t) >= 3)
+
+
+def clean_extract(text):
+    """Remove wiki markup that sometimes stays in the text ([[File:…]], {{…}}, [[link|text]]), even when nested."""
+    files = r'(?:ملف|File|Image|صورة)'
+    for _ in range(3):   # inner links first: [[صخر|الصخور]] -> الصخور
+        text = re.sub(r'\[\[(?!' + files + r':)(?:[^\[\]|]*\|)?([^\[\]|]*)\]\]', r'\1', text)
+    text = re.sub(r'\[\[' + files + r':[^\[\]]*\]\]', ' ', text)
+    text = re.sub(r'\{\{[^{}]*\}\}', ' ', text)
+    text = re.sub(r'\[\[|\]\]|\{\{|\}\}', ' ', text)
+    text = re.sub(r'\(\s*[;,،]?\s*\)', '', text)
+    text = re.sub(r'\(\s*[;,،]\s*', '(', text)
+    text = re.sub(r'\(\s*[^()]{0,15}:\s*\)', '', text)   # empty labels such as (رمزها: )
+    return re.sub(r'\s+', ' ', text).strip()
+
+
+def acceptable(page, question, words, question_on_topic):
+    title = page.get('title', '')
+    description = page.get('description', '') or ''
+    extract = clean_extract(page.get('extract') or '')
+    if page.get('missing') or len(extract) < 40 or 'may refer to' in extract[:200] or 'قد يشير' in extract[:200]:
+        return None
+    sentence = first_sentence(extract)
+    if NOT_SCIENCE.search(normalise(f'{description} {sentence}')) or NOT_SCIENCE.search(f'{description} {sentence}'):
+        return None
+    if words and not title_matches(title, words):
+        return None
+    definition = f"{before_location(description)} {before_location(' '.join(sentence.split()[:15]))}"
+    if on_topic(f'{description} {sentence}', places=False) or on_topic(definition) or \
+            (question_on_topic and on_topic(extract[:600], places=False)):
+        return extract
     return None
 
 
+def title_score(title, words):
+    """How well the title names the subject: (question words found in it, share of the title they cover)."""
+    title_words = [t for t in normalise(title).split() if len(t) >= 3]
+    if not title_words:
+        return (0, 0.0)
+    hits = sum(1 for w in words if any(t.startswith(w[:5]) or w.startswith(t[:5]) for t in title_words))
+    covered = sum(1 for t in title_words if any(t.startswith(w[:5]) or w.startswith(t[:5]) for w in words))
+    return (hits, covered / len(title_words))
+
+
+def wikipedia_answer(question, language, max_chars=600):
+    """Return a short Wikipedia summary that answers the question, or None.
+    Candidates: the article titled exactly like the subject, articles titled like each main word ("Mars", "بركان"),
+    and the top search results. Only science articles about space, geology, geography or AI are kept (films, books
+    and stories are skipped); the one whose title best names the subject wins."""
+    query = QUESTION_WORDS.sub('', question).strip(' ?؟!.') or question
+    base = f'https://{language}.wikipedia.org'
+    common = {'action': 'query', 'format': 'json', 'formatversion': 2, 'prop': 'extracts|description|info',
+              'exintro': 1, 'explaintext': 1, 'inprop': 'url', 'redirects': 1}
+    words = query_words(query)
+    question_on_topic = on_topic(question)
+    titles = [query]
+    if question_on_topic:   # single words only when the question itself is about science ("Mars", not "Rome")
+        titles += [w for w in words[:3] if w != normalise(query)]
+    exact = wikipedia_get(base, {**common, 'titles': '|'.join(titles), 'exlimit': len(titles)})
+    asked = [normalise(t) for t in titles]
+    redirects = {normalise(r.get('to', '')): normalise(r.get('from', ''))
+                 for r in exact.get('query', {}).get('redirects', []) + exact.get('query', {}).get('normalized', [])}
+
+    def requested_order(page):   # keep the exact pages in the order they were asked for: subject first
+        name = normalise(page.get('title', ''))
+        name = redirects.get(name, name)
+        return asked.index(name) if name in asked else len(asked)
+
+    found = wikipedia_get(base, {**common, 'generator': 'search', 'gsrsearch': ' '.join(words) or query,
+                                 'gsrlimit': 6, 'exlimit': 6})
+    candidates = sorted(exact.get('query', {}).get('pages', []), key=requested_order) + \
+        sorted(found.get('query', {}).get('pages', []), key=lambda page: page.get('index', 99))
+    best, best_key, seen = None, None, set()
+    for order, page in enumerate(candidates):
+        title = page.get('title', '')
+        if title in seen:
+            continue
+        seen.add(title)
+        extract = acceptable(page, question, words, question_on_topic)
+        if not extract:
+            continue
+        key = (*title_score(title, words), -order)
+        if best_key is None or key > best_key:
+            best, best_key = (page, extract), key
+    if best is None:
+        return None
+    page, extract = best
+    if len(extract) > max_chars:
+        cut = max(extract.rfind('. ', 0, max_chars), extract.rfind('.', 0, max_chars))
+        extract = extract[:cut + 1] if cut > max_chars // 3 else extract[:max_chars] + '…'
+    title = page.get('title', '')
+    return {'title': title, 'extract': extract,
+            'url': page.get('fullurl', f"{base}/wiki/{urllib.parse.quote(title.replace(' ', '_'))}")}
+
+
+COMPARE = re.compile(r'(?:difference|differences|different|differ|compare)\b.*?\bbetween\s+(.+?)\s+and\s+(.+?)[?.!]*$'
+                     r'|^(.+?)\s+(?:vs\.?|versus)\s+(.+?)[?.!]*$'
+                     r'|(?:الفرق|فرق|الاختلاف)\s+بين\s+(.+?)\s+و\s*(.+?)[؟?.!]*$', re.I)
+
+
+def compared_things(text):
+    match = COMPARE.search(text.strip())
+    if not match:
+        return None
+    parts = [p for p in match.groups() if p]
+    return [p.strip() for p in parts[:2]] if len(parts) >= 2 else None
+
+
+WIKI_RULES = 'rules-2026-11-11c'   # change when the answer rules change, so old saved answers are not reused
+
+
 @st.cache_data(show_spinner=False, ttl=86400)
-def cached_wikipedia_answer(question, language):
-    return wikipedia_answer(question, language)
+def cached_wikipedia_answer(question, language, max_chars=600, rules=WIKI_RULES):
+    return wikipedia_answer(question, language, max_chars)
 
 
 def route(text):
@@ -322,10 +435,23 @@ def route(text):
         return ('talk', talk)
     index, score = project_match(text)
     plain = normalise(text) + ' ' + text.lower()
-    if score >= 0.2 and any(marker in plain for marker in PROJECT_MARKERS):
+    if re.search(r'canyon|اخدود|اخاديد', plain) and re.search(r'valley|وادي|اوديه', plain):
+        return [e[0] for e in ENTRIES].index('Canyon or valley: what is the difference?')
+    if query_words(QUESTION_WORDS.sub('', text).strip(' ?؟!.')) in (['canyon'], ['canyons'], ['اخدود'], ['اخاديد']):
+        return [e[0] for e in ENTRIES].index('What is a canyon?')
+    if score >= 0.45 or (score >= 0.2 and any(marker in plain for marker in PROJECT_MARKERS)):
         return index
+    things = compared_things(text)
+    if things:
+        try:
+            articles = [cached_wikipedia_answer(thing, language_of(text), 300, WIKI_RULES) for thing in things]
+        except Exception:
+            return ('offline', None)
+        if all(articles):
+            return ('compare', articles)
+        return None
     try:
-        article = cached_wikipedia_answer(text, language_of(text))
+        article = cached_wikipedia_answer(text, language_of(text), 600, WIKI_RULES)
     except Exception:
         article = 'offline'
     if article == 'offline':
@@ -515,6 +641,14 @@ def show_rova():
                     elif isinstance(index, tuple) and index[0] == 'offline':
                         answer = html.escape('لم أستطع الوصول إلى ويكيبيديا الآن. حاول بعد قليل.' if language == 'ar'
                                              else 'I couldn’t reach Wikipedia right now. Please try again in a moment.')
+                    elif isinstance(index, tuple) and index[0] == 'compare':
+                        source = ('المصدر: ويكيبيديا (CC BY-SA 4.0) — ليست من نتائج المشروع' if language == 'ar'
+                                  else 'Source: Wikipedia (CC BY-SA 4.0), not part of the project results')
+                        intro = 'إليك كل واحد منهما:' if language == 'ar' else 'Here is each one, so you can compare:'
+                        answer = html.escape(intro) + ''.join(
+                            f'<br><b>{html.escape(a["title"])}</b><br>{html.escape(a["extract"])}' for a in index[1])
+                        answer += ''.join(f'<br><i><a href="{html.escape(a["url"])}" target="_blank" style="color:var(--sand)">'
+                                          f'{source} · {html.escape(a["title"])}</a></i>' for a in index[1])
                     elif isinstance(index, tuple) and index[0] == 'wiki':
                         article = index[1]
                         source = ('المصدر: ويكيبيديا (CC BY-SA 4.0) — ليست من نتائج المشروع' if language == 'ar'
