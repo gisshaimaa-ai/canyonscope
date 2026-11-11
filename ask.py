@@ -1,7 +1,8 @@
 """Ask Rova: a small floating helper on every page, in English and Arabic.
 Questions about the project are answered from facts written in advance (offline search with scikit-learn).
 Other questions about space, geology, geography or AI are answered from Wikipedia in the question's language,
-with the article linked (CC BY-SA 4.0). Questions on other topics get a polite "I can't help with that"."""
+with the article linked (CC BY-SA 4.0). Questions on other topics get a polite "I can't help with that". The owner can unlock a presenter mode
+(password in the Streamlit secrets) in which Rova answers with Google Gemini; visitors never reach Gemini."""
 import base64
 import html
 import json
@@ -129,6 +130,9 @@ ENTRIES = [
 ]
 
 SMALL_TALK = [
+    (re.compile(r'^\s*(yes|yeah|ok|okay|sure|نعم|اي|ايوه|أيوه|تمام|طيب|اوكي|أوكي|حسنا|حسناً)\s*[.!؟?]*\s*$', re.I),
+     {'en': 'Great! Ask me about this project, or anything about space, geology, geography or AI. For example: “What is a volcano?”',
+      'ar': 'رائع! اسألني عن المشروع، أو عن أي شيء في الفضاء والجيولوجيا والجغرافيا والذكاء الاصطناعي. مثلاً: «ما هو البركان؟»'}),
     (re.compile(r'(thank|thanks|شكر|مشكور|يعطيك)', re.I),
      {'en': 'You’re welcome! Ask me anything else about CanyonScope.', 'ar': 'العفو! اسألني أي شيء آخر عن المشروع.'}),
     (re.compile(r'(\bhi\b|hello|hey|how are you|مرحب|السلام|اهلا|أهلا|هلا|حالك|شلونك|كيفك)', re.I),
@@ -244,6 +248,10 @@ def on_topic(text, places=True):
     return False
 
 
+WIKI_HEADERS = {'User-Agent': 'CanyonScope/1.0 (https://github.com/gisshaimaa-ai/canyonscope; student research project)',
+                'Accept': 'application/json'}
+
+
 def first_sentence(text):
     match = re.search(r'[.!?؟]\s', text)
     return text[:match.start() + 1] if match and match.start() < 300 else text[:300]
@@ -255,41 +263,56 @@ def before_location(text):
     return re.split(r'\s(?:in|on|at|near|from|located|originating|في|قرب|بالقرب)\s', f' {text} ', maxsplit=1)[0]
 
 
-@st.cache_data(show_spinner=False, ttl=86400)
+def wikipedia_get(base, params):
+    """One call to the Wikipedia API, with a descriptive User-Agent (Wikimedia policy) and one retry."""
+    import time
+    url = f'{base}/w/api.php?' + urllib.parse.urlencode(params)
+    request = urllib.request.Request(url, headers=WIKI_HEADERS)
+    for attempt in range(2):
+        try:
+            with urllib.request.urlopen(request, timeout=12) as reply:
+                return json.load(reply)
+        except Exception as error:
+            print(f'Wikipedia request failed ({type(error).__name__}: {error}) for {url[:160]}', flush=True)
+            if attempt == 0:
+                time.sleep(1.5)
+    raise ConnectionError('Wikipedia not reachable')
+
+
 def wikipedia_answer(question, language):
     """Search Wikipedia in the question's language; return the first on-topic article summary, or None.
+    One API call returns the top articles with their short description and plain-text introduction.
     An article counts as on topic when its title, short description or first sentence is about space, geology,
     geography or AI (or when the question itself is, and the article's opening agrees)."""
     query = QUESTION_WORDS.sub('', question).strip(' ?؟!.') or question
-    headers = {'User-Agent': 'CanyonScope/1.0 (student research project; Streamlit app)'}
     base = f'https://{language}.wikipedia.org'
-    params = urllib.parse.urlencode({'action': 'query', 'list': 'search', 'srsearch': query, 'srlimit': 4,
-                                     'format': 'json', 'utf8': 1})
-    with urllib.request.urlopen(urllib.request.Request(f'{base}/w/api.php?{params}', headers=headers), timeout=10) as reply:
-        results = json.load(reply).get('query', {}).get('search', [])
+    data = wikipedia_get(base, {'action': 'query', 'format': 'json', 'formatversion': 2, 'generator': 'search',
+                                'gsrsearch': query, 'gsrlimit': 4, 'prop': 'extracts|description|info',
+                                'exintro': 1, 'explaintext': 1, 'exlimit': 4, 'inprop': 'url', 'redirects': 1})
+    pages = sorted(data.get('query', {}).get('pages', []), key=lambda page: page.get('index', 99))
     question_on_topic = on_topic(question)
-    for result in results:
-        title = result['title']
-        url = f"{base}/api/rest_v1/page/summary/{urllib.parse.quote(title.replace(' ', '_'), safe='')}"
-        try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=10) as reply:
-                page = json.load(reply)
-        except Exception:
-            continue   # one article failing should not stop the others
-        extract = (page.get('extract') or '').strip()
-        if page.get('type') == 'disambiguation' or len(extract) < 40:
-            continue
+    for page in pages:
+        title = page.get('title', '')
+        description = page.get('description', '')
+        extract = re.sub(r'\s+', ' ', (page.get('extract') or '')).strip()
+        if len(extract) < 40 or 'may refer to' in extract[:200] or 'قد يشير' in extract[:200]:
+            continue   # empty or disambiguation page
         sentence = first_sentence(extract)
-        opening = f"{page.get('title', title)} {page.get('description', '')} {sentence}"
-        definition = f"{before_location(page.get('description', ''))} {before_location(' '.join(sentence.split()[:15]))}"
+        opening = f'{title} {description} {sentence}'
+        definition = f"{before_location(description)} {before_location(' '.join(sentence.split()[:15]))}"
         if on_topic(opening, places=False) or on_topic(definition) or \
                 (question_on_topic and on_topic(extract[:600], places=False)):
             if len(extract) > 600:
                 cut = max(extract.rfind('. ', 0, 600), extract.rfind('.', 0, 600))
                 extract = extract[:cut + 1] if cut > 200 else extract[:600] + '…'
-            return {'title': page.get('title', title), 'extract': extract,
-                    'url': page.get('content_urls', {}).get('desktop', {}).get('page', f'{base}/wiki/{title}')}
+            return {'title': title, 'extract': extract,
+                    'url': page.get('fullurl', f"{base}/wiki/{urllib.parse.quote(title.replace(' ', '_'))}")}
     return None
+
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def cached_wikipedia_answer(question, language):
+    return wikipedia_answer(question, language)
 
 
 def route(text):
@@ -302,7 +325,7 @@ def route(text):
     if score >= 0.2 and any(marker in plain for marker in PROJECT_MARKERS):
         return index
     try:
-        article = wikipedia_answer(text, language_of(text))
+        article = cached_wikipedia_answer(text, language_of(text))
     except Exception:
         article = 'offline'
     if article == 'offline':
@@ -310,6 +333,80 @@ def route(text):
     if article:
         return ('wiki', article)
     return index if score >= 0.25 else None
+
+
+# ---------- Presenter mode: Rova answers with Google Gemini (owner only, unlocked with a password) ----------
+# Needs two Streamlit secrets: GEMINI_API_KEY and ROVA_PRESENTER_PASSWORD (optional: GEMINI_MODEL).
+# Visitors never reach Gemini; they get the project facts and Wikipedia answers above.
+
+def secret(name, default=None):
+    try:
+        return st.secrets.get(name, default)
+    except Exception:
+        return default
+
+
+def presenter_ready():
+    return bool(secret('GEMINI_API_KEY')) and bool(secret('ROVA_PRESENTER_PASSWORD'))
+
+
+def check_password():
+    import hmac
+    typed = st.session_state.get('rova_pw', '')
+    expected = str(secret('ROVA_PRESENTER_PASSWORD', ''))
+    st.session_state.rova_presenter = bool(expected) and hmac.compare_digest(typed.encode(), expected.encode())
+    st.session_state.rova_pw_wrong = bool(typed) and not st.session_state.rova_presenter
+    st.session_state.rova_pw = ''
+
+
+def presenter_off():
+    st.session_state.rova_presenter = False
+
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def gemini_model(key):
+    """The model to use: GEMINI_MODEL if set, else the newest available 'flash' model that can write text."""
+    chosen = secret('GEMINI_MODEL')
+    if chosen:
+        return chosen
+    request = urllib.request.Request('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',
+                                     headers={'x-goog-api-key': key})
+    with urllib.request.urlopen(request, timeout=20) as reply:
+        models = json.load(reply).get('models', [])
+    names = [m['name'].removeprefix('models/') for m in models
+             if 'generateContent' in m.get('supportedGenerationMethods', [])]
+    flash = [n for n in names if 'flash' in n and 'lite' not in n and 'image' not in n and 'tts' not in n
+             and 'preview' not in n and 'exp' not in n]
+    return sorted(flash)[-1] if flash else (names[0] if names else 'gemini-2.5-flash')
+
+
+def ask_gemini(question, earlier):
+    key = secret('GEMINI_API_KEY')
+    facts = '\n'.join(f'- {q_en} {a_en}' for q_en, _, a_en, _, _ in ENTRIES)
+    instruction = (
+        'You are Rova, a friendly cartoon Mars rover and the helper of CanyonScope, a GeoAI student project. '
+        'Answer questions about the project, space, planetary science, geology, geography and AI tools. '
+        'Politely decline other topics in one sentence. Reply in the language of the question (Arabic or English), '
+        'in plain, simple words, at most 120 words, without markdown. '
+        'For anything about the project, use ONLY these facts and never invent numbers; if the facts do not cover it, '
+        'say you do not know:\n' + facts)
+    contents = []
+    for asked, said in earlier[-4:]:
+        contents.append({'role': 'user', 'parts': [{'text': asked}]})
+        contents.append({'role': 'model', 'parts': [{'text': said}]})
+    contents.append({'role': 'user', 'parts': [{'text': question}]})
+    body = {'system_instruction': {'parts': [{'text': instruction}]}, 'contents': contents,
+            'generationConfig': {'temperature': 0.3, 'maxOutputTokens': 600}}
+    request = urllib.request.Request(
+        f'https://generativelanguage.googleapis.com/v1beta/models/{gemini_model(key)}:generateContent',
+        data=json.dumps(body).encode(), headers={'Content-Type': 'application/json', 'x-goog-api-key': key})
+    with urllib.request.urlopen(request, timeout=40) as reply:
+        result = json.load(reply)
+    parts = result.get('candidates', [{}])[0].get('content', {}).get('parts', [])
+    text = ''.join(part.get('text', '') for part in parts).strip()
+    if not text:
+        raise ValueError(f'empty Gemini reply: {str(result)[:200]}')
+    return text
 
 
 def language_of(text):
@@ -333,7 +430,16 @@ def on_choice():
 def on_typed():
     text = st.session_state.rova_text.strip()
     if text:
-        remember(text, route(text), language_of(text), True)
+        if st.session_state.get('rova_presenter'):
+            earlier = [(q, i[1]) for q, i, _, _ in st.session_state.rova_history
+                       if isinstance(i, tuple) and i[0] == 'gemini']
+            try:
+                remember(text, ('gemini', ask_gemini(text, earlier)), language_of(text), True)
+            except Exception as error:
+                print(f'Gemini failed ({type(error).__name__}: {error})', flush=True)
+                remember(text, route(text), language_of(text), True)
+        else:
+            remember(text, route(text), language_of(text), True)
     st.session_state.rova_text = ''
 
 
@@ -385,9 +491,9 @@ def show_rova():
             arabic = language_choice == 'العربية'
             labels = [entry[1] if arabic else entry[0] for entry in ENTRIES]
             st.selectbox('اختر سؤالاً' if arabic else 'Choose a question', labels, index=None,
-                         placeholder='اختر سؤالاً…' if arabic else 'Choose a question…',
+                         placeholder='اختر سؤالاً' if arabic else 'Choose a question…',
                          key='rova_question', on_change=on_choice)
-            st.text_input('…أو اكتب سؤالك ثم اضغط Enter' if arabic else '…or type your own and press Enter (English or Arabic)',
+            st.text_input('أو اكتب سؤالك واضغط Enter' if arabic else '…or type your own and press Enter (English or Arabic)',
                           key='rova_text', on_change=on_typed,
                           placeholder='مثلاً: ما هي الصفائح التكتونية؟' if arabic else 'e.g. How did the Grand Canyon form?')
             history = st.session_state.rova_history
@@ -403,6 +509,9 @@ def show_rova():
                         answer = html.escape(NOT_FOUND[language])
                     elif isinstance(index, tuple) and index[0] == 'talk':
                         answer = html.escape(SMALL_TALK[index[1]][1][language])
+                    elif isinstance(index, tuple) and index[0] == 'gemini':
+                        answer = (html.escape(index[1]).replace('\n', '<br>') +
+                                  '<br><i>' + ('أُجيب بمساعدة Gemini' if language == 'ar' else 'Answered with Gemini') + '</i>')
                     elif isinstance(index, tuple) and index[0] == 'offline':
                         answer = html.escape('لم أستطع الوصول إلى ويكيبيديا الآن. حاول بعد قليل.' if language == 'ar'
                                              else 'I couldn’t reach Wikipedia right now. Please try again in a moment.')
@@ -423,3 +532,12 @@ def show_rova():
                     st.markdown(''.join(parts), unsafe_allow_html=True)
             if history:
                 st.button('مسح المحادثة' if arabic else 'Clear chat', key='rova_clear', on_click=clear_history)
+            if presenter_ready():
+                with st.expander('Presenter', expanded=False):
+                    if st.session_state.get('rova_presenter'):
+                        st.caption('Presenter mode is on: Rova answers with Gemini.')
+                        st.button('Turn off', key='rova_presenter_off', on_click=presenter_off)
+                    else:
+                        st.text_input('Password', type='password', key='rova_pw', on_change=check_password)
+                        if st.session_state.get('rova_pw_wrong'):
+                            st.caption('Wrong password.')
