@@ -34,7 +34,7 @@ DATE_OPTIONS = {
     'Summer 2025': '2025-05-15/2025-08-31',
     'Summer 2024': '2024-05-15/2024-08-31',
 }
-PAGES = ['Home', 'Explorer', 'Analytics', 'Earth vs Mars', 'Method & Accuracy', 'Data']
+PAGES = ['Home', 'Learn', 'Explorer', 'Analytics', 'Earth vs Mars', '3D', 'Method & Accuracy', 'Data', 'Ask']
 HEADERS = {'User-Agent': 'GrandCanyonTributaryExplorer/1.0 (student research project)'}
 CSS = """
 <style>
@@ -933,7 +933,7 @@ for name, value in defaults.items():
         st.session_state[name] = value
 
 results = load_results()
-brand, navigation = st.columns([1, 2])
+brand, navigation = st.columns([1, 5])
 brand.markdown('<div class="brand">Canyon<span>Scope</span></div>', unsafe_allow_html=True)
 page = navigation.radio('Navigation', PAGES, key='page', horizontal=True, label_visibility='collapsed')
 
@@ -947,5 +947,14 @@ elif page == 'Earth vs Mars':
     show_mars()
 elif page == 'Method & Accuracy':
     show_method()
+elif page == 'Learn':
+    from learn import show_learn
+    show_learn()
+elif page == '3D':
+    from view3d import show_3d
+    show_3d()
+elif page == 'Ask':
+    from ask import show_ask
+    show_ask()
 else:
     show_data(results)

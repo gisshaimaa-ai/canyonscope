@@ -157,6 +157,9 @@ python scripts/example_detection.py
 3. **Analytics** — statistics of the 325-canyon catalogue.
 4. **Earth vs Mars** — maps of tributary canyons on both planets, the shape comparison and robustness checks.
 5. **Method & Accuracy** and **Data** — metrics, sources and downloads.
+6. **Learn** — canyon words explained (valley, canyon, gorge, tributary, mouth), a drawn 3D landscape and a short quiz.
+7. **3D** — the Grand Canyon and Valles Marineris in 3D, in units of D or at true size.
+8. **Ask** — questions answered only from the project’s own facts. Without a key it uses offline search (scikit-learn). Optional: add `GEMINI_API_KEY` (and `GEMINI_MODEL`) in the app’s Secrets on Streamlit Cloud to let Google Gemini write the answers from the same facts. Never commit a key to GitHub.
 
 **Deploying on Streamlit Community Cloud:** connect this repository, choose branch `main`, main file `app.py`, Python 3.13. `packages.txt` installs the system libraries OpenCV needs.
 
@@ -167,6 +170,7 @@ python scripts/example_detection.py
 | `notebooks/earth_pipeline.ipynb` | Data download, labels, dataset, training (v1, v2), evaluation, full-canyon run, geology | Several hours on a Colab T4 |
 | `notebooks/mars_analog.ipynb` | Earth and Mars elevation models, calibration, tributary extraction, statistics | About 30 minutes (High-RAM) |
 | `notebooks/gnis_validation.ipynb` | Independent check against USGS GNIS names, error analysis by reach | 2 minutes |
+| `scripts/make_terrain_3d.py` | Makes the small 3D depth maps for the 3D page | Seconds |
 | `scripts/prepare_app_data.py` | Makes the light geology and Mars files the app reads | 1 minute |
 
 Large intermediate files (imagery, DEMs, tiles, the 349 MB Mars raster) are rebuilt by the notebooks from the public sources above and are not stored in GitHub.
@@ -177,6 +181,7 @@ Large intermediate files (imagery, DEMs, tiles, the 349 MB Mars raster) are rebu
 
 ```
 app.py                     Streamlit app (all pages)
+learn.py, view3d.py, ask.py  Learn, 3D and Ask pages
 detector.py                Live detection: Sentinel-2 + YOLO + DEM separation
 analog/flowtools.py        Flow routing for the Earth vs Mars analysis
 models/seg_rgb_v2/best.pt  Trained YOLO model (23 MB)
