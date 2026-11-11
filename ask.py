@@ -1,8 +1,13 @@
-"""Ask Rova: a small floating helper on every page. Visitors pick a question from a list or type their own.
-Every answer is a project fact written in advance; typed questions are matched to the closest one by a small
-offline search (scikit-learn). Nothing is sent outside the app and nothing is invented."""
+"""Ask Rova: a small floating helper on every page, in English and Arabic.
+Questions about the project are answered from facts written in advance (offline search with scikit-learn).
+Other questions about space, geology, geography or AI are answered from Wikipedia in the question's language,
+with the article linked (CC BY-SA 4.0). Questions on other topics get a polite "I can't help with that"."""
 import base64
 import html
+import json
+import re
+import urllib.parse
+import urllib.request
 
 import streamlit as st
 
@@ -22,112 +27,399 @@ ROVA_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
 </svg>"""
 ROVA_URI = 'data:image/svg+xml;base64,' + base64.b64encode(ROVA_SVG.encode()).decode()
 
-GREETING = ("Hi, I’m Rova, a little Mars rover. I know everything about CanyonScope. Pick a question or type your "
-            "own, and I’ll answer from the project’s own results.")
-
-QUESTIONS = {
-    'What is CanyonScope?': 'An AI that finds the side canyons of the Grand Canyon in free Sentinel-2 satellite images, and then uses them as a reference to compare with the side canyons of Valles Marineris on Mars.',
-    'What problem does it solve?': 'There is no consistent map of the Grand Canyon’s side canyons. Drawing them by hand is slow and two people draw them differently. Side canyons matter for drainage, erosion and the debris flows that build the river’s rapids.',
-    'Who can use it?': 'Geomorphologists, park and hazard planners, teachers and planetary scientists. It answers: where are the side canyons in my area, how big are they, and what rock are they cut into?',
-    'What is a side canyon?': 'A tributary (side) canyon joins the main canyon, and its water flows into the main river. Here it needs at least 250 m of relief and 1 km² of area.',
-    'Canyon or valley: what is the difference?': 'Every canyon is a valley, but not every valley is a canyon. A canyon is deep and steep compared with its width; a valley is often wide with gentle slopes. See the Learn page.',
-    'Which data does it use?': 'All free and open: Sentinel-2 images (10 m), USGS 3DEP elevation (10 m), the USGS geology map, USGS official names (for checking only), and the USGS HRSC–MOLA elevation model of Mars (200 m).',
-    'How does the AI find a canyon?': 'A YOLO model marks canyon ground on overlapping image tiles. Pixels found at least twice are kept. Then elevation data splits that ground into separate canyons along the ridges between them.',
-    'How was the AI trained?': '71 canyons were drawn from elevation and checked by hand in QGIS. The area was split by place, so the test area is ground the model never saw. Training: yolo26s-seg, 100 epochs, free Colab GPU.',
-    'How accurate is it?': 'In the test area: precision 0.91 and overlap (IoU) 0.68. In an unseen western area, Lava Falls, overlap improved from 0.36 to 0.52 after adding western training areas.',
-    'How many canyons were found?': '325 side canyons covering 2,397 km², across the whole Grand Canyon. A live run of 123 km² takes about 39 seconds.',
-    'Was it checked against official names?': 'Yes. Of 186 official named canyons, it found 83% in the central canyon, 54% in the west and 25% in narrow Marble Canyon: 70% overall. 108 canyons now show their official name.',
-    'Why compare with Mars?': 'Valles Marineris is the largest canyon system we know, about 4,000 km long, and nobody can go there. The Grand Canyon’s side canyons were carved by water, so they are a good reference.',
-    'How can you compare such different sizes?': 'Everything is divided by D, the depth of the main canyon: 1,229 m on Earth and 9,237 m on Mars. Rules were set on Earth, frozen, and used on Mars unchanged.',
-    'What did you find on Mars?': 'Seen from above, Mars’s side canyons have the same shape as the Grand Canyon’s (within 1–7%). But they are cut about 40% less deeply relative to the main canyon (0.61 times).',
-    'Does this prove water on Mars?': 'No. The shape is consistent with water erosion, and the main trough probably deepened by rifting faster than the side canyons. It is a hypothesis, not proof.',
-    'What are the limits?': 'Small test sets, trained on Grand Canyon rocks only, weakest in narrow Marble Canyon, and Mars compared at 200 m with one Earth reference.',
-    'Where is the code?': 'Open on GitHub: github.com/gisshaimaa-ai/canyonscope (AGPL-3.0 licence).',
+GREETING = {
+    'en': 'Hi, I’m Rova, a little Mars rover. Ask me about this project, or anything about space, geology, geography or AI.',
+    'ar': 'مرحباً، أنا روفا، مركبة صغيرة من المريخ. اسألني عن المشروع، أو عن أي شيء في الفضاء والجيولوجيا والجغرافيا والذكاء الاصطناعي.',
+}
+NOT_FOUND = {
+    'en': 'Sorry, I can only help with this project, space, geology, geography and AI. Try asking it another way, or pick a question from the list.',
+    'ar': 'عذراً، أستطيع المساعدة فقط في المشروع والفضاء والجيولوجيا والجغرافيا والذكاء الاصطناعي. جرّب صياغة السؤال بطريقة أخرى، أو اختر سؤالاً من القائمة.',
 }
 
-# Extra search words (English and Arabic) so typed questions find the right answer
-KEYWORDS = {
-    'What is CanyonScope?': 'about project app idea purpose goal ما هو المشروع فكرة التطبيق هدف',
-    'What problem does it solve?': 'problem solve why important matter المشكلة مشكلة تحل أهمية لماذا مهم',
-    'Who can use it?': 'users who audience use benefit المستخدمين من يستخدم المستفيد',
-    'What is a side canyon?': 'tributary side canyon definition meaning رافد أخدود جانبي تعريف معنى',
-    'Canyon or valley: what is the difference?': 'canyon valley gorge difference valles وادي أخدود فرق الفرق',
-    'Which data does it use?': 'data sources satellite sentinel images elevation dem البيانات مصادر صور قمر صناعي ارتفاعات',
-    'How does the AI find a canyon?': 'how works method pipeline yolo steps elevation watershed كيف يعمل طريقة خطوات الذكاء الاصطناعي',
-    'How was the AI trained?': 'train training labels qgis model epochs gpu تدريب التدريب عينات النموذج',
-    'How accurate is it?': 'accuracy accurate precision recall iou results good الدقة دقة النتائج',
-    'How many canyons were found?': 'how many number count catalogue found canyons كم عدد الأخاديد الكتالوج',
-    'Was it checked against official names?': 'gnis official names validation check verify الأسماء الرسمية تحقق التحقق',
-    'Why compare with Mars?': 'why mars valles marineris analog reason لماذا المريخ نظير',
-    'How can you compare such different sizes?': 'compare size scale depth d divide fair مقارنة الحجم القياس العمق',
-    'What did you find on Mars?': 'mars result finding found shape depth similar different نتيجة المريخ وجدت',
-    'Does this prove water on Mars?': 'water proof prove hypothesis rifting إثبات الماء ماء مياه يوجد فرضية',
-    'What are the limits?': 'limits limitations weakness problems القيود حدود ضعف',
-    'Where is the code?': 'code github licence open source الكود جيت هب المصدر',
-}
+# Each entry: English question, Arabic question, English answer, Arabic answer, extra search words
+ENTRIES = [
+    ('What is CanyonScope?', 'ما هو مشروع CanyonScope؟',
+     'An AI that finds the side canyons of the Grand Canyon in free Sentinel-2 satellite images, and then uses them as a reference to compare with the side canyons of Valles Marineris on Mars.',
+     'ذكاء اصطناعي يكتشف الأخاديد الجانبية في Grand Canyon من صور القمر الصناعي Sentinel-2 المجانية، ثم يستخدمها كمرجع للمقارنة مع الأخاديد الجانبية في Valles Marineris على المريخ.',
+     'about project app idea فكره المشروع التطبيق عن'),
+    ('What problem does it solve?', 'ما المشكلة التي يحلها المشروع؟',
+     'There is no consistent map of the Grand Canyon’s side canyons. Drawing them by hand is slow, and two people draw them differently. Side canyons matter for drainage, erosion and the debris flows that build the river’s rapids.',
+     'لا توجد خريطة منتظمة للأخاديد الجانبية في Grand Canyon. رسمها باليد بطيء، وكل شخص يرسمها بشكل مختلف. وهذه الأخاديد مهمة لأنها تتحكم في تصريف المياه والتعرية والسيول التي تصنع المنحدرات في النهر.',
+     'problem solve why important matter مشكله تحل اهميه لماذا مهم'),
+    ('Who can use it?', 'من يستفيد من المشروع؟',
+     'Geomorphologists, park and hazard planners, teachers and planetary scientists. It answers: where are the side canyons in my area, how big are they, and what rock are they cut into?',
+     'علماء التضاريس، ومخططو المتنزه والمخاطر، والمعلمون، وعلماء الكواكب. يجيب عن سؤال: أين الأخاديد الجانبية في منطقتي، وما حجمها، وفي أي صخر حُفرت؟',
+     'users who audience benefit مستخدمين يستخدم يستفيد مستفيد فائده'),
+    ('What are the project goals?', 'ما أهداف المشروع؟',
+     'Build and test an AI workflow that outlines each side canyon, and apply it to Mars. Four questions: how accurate is it on new ground, does elevation separate canyons, does it work across the whole Grand Canyon, and do Mars’s side canyons look water-carved?',
+     'بناء واختبار ذكاء اصطناعي يرسم حدود كل أخدود جانبي، ثم تطبيقه على المريخ. وفيه أربعة أسئلة بحثية: ما دقته في مناطق جديدة؟ هل تفصل الارتفاعات بين الأخاديد؟ هل يعمل في Grand Canyon كله؟ وهل أخاديد المريخ تشبه أخاديد نحتها الماء؟',
+     'goals objective aims research questions هدف اهداف اسئله بحث غايه'),
+    ('What is a side canyon?', 'ما هو الأخدود الجانبي (الرافد)؟',
+     'A tributary (side) canyon joins the main canyon, and its water flows into the main river. In this project it needs at least 250 m of relief and 1 km² of area.',
+     'الأخدود الجانبي (الرافد) هو أخدود يتصل بالأخدود الرئيسي، وتجري مياهه إلى النهر الرئيسي. في هذا المشروع يجب أن يكون فرق ارتفاعه 250 متراً على الأقل ومساحته 1 كم² على الأقل.',
+     'tributary side canyon definition meaning رافد روافد جانبي تعريف معنى'),
+    ('Canyon or valley: what is the difference?', 'ما الفرق بين الوادي والأخدود؟',
+     'Every canyon is a valley, but not every valley is a canyon. A canyon is deep and steep compared with its width; a valley is often wide with gentle slopes. See the Learn page.',
+     'كل أخدود هو وادٍ، لكن ليس كل وادٍ أخدوداً. الأخدود عميق وجدرانه شديدة الانحدار مقارنة بعرضه، أما الوادي فغالباً عريض ومنحدراته خفيفة. شاهد صفحة Learn.',
+     'canyon valley gorge difference valles وادي اوديه اخدود فرق'),
+    ('Which data does it use?', 'ما البيانات المستخدمة؟',
+     'All free and open: Sentinel-2 images (10 m), USGS 3DEP elevation (10 m), the USGS geology map, USGS official names (for checking only), and the USGS HRSC–MOLA elevation model of Mars (200 m).',
+     'كلها مجانية ومفتوحة: صور Sentinel-2 بدقة 10 م، وارتفاعات USGS 3DEP بدقة 10 م، والخريطة الجيولوجية من USGS، والأسماء الرسمية من USGS (للتحقق فقط)، ونموذج ارتفاعات المريخ HRSC–MOLA بدقة 200 م.',
+     'data sources satellite sentinel images elevation dem بيانات مصادر مصدر اين جات صور قمر صناعي ارتفاعات'),
+    ('How does the AI find a canyon?', 'كيف يكتشف الذكاء الاصطناعي الأخدود؟',
+     'A YOLO model marks canyon ground on overlapping image tiles. Pixels found at least twice are kept. Then elevation data splits that ground into separate canyons along the ridges between them.',
+     'نموذج YOLO يحدد أرض الأخاديد على مربعات متداخلة من الصورة، ونحتفظ فقط بالأجزاء التي وجدها مرتين على الأقل. بعدها تفصل بيانات الارتفاع هذه الأرض إلى أخاديد مستقلة عند الحواف المرتفعة بينها.',
+     'how works method pipeline steps watershed كيف يعمل طريقه خطوات يكتشف يجد ذكاء اصطناعي'),
+    ('How was the AI trained?', 'كيف تم تدريب النموذج؟',
+     '71 canyons were drawn from elevation and checked by hand in QGIS. The area was split by place, so the test area is ground the model never saw. Training: yolo26s-seg, 100 epochs, on a free Colab GPU.',
+     'رسمنا 71 أخدوداً من بيانات الارتفاع وراجعناها يدوياً في QGIS. وقسّمنا المنطقة حسب المكان، فمنطقة الاختبار لم يرها النموذج أبداً. التدريب: yolo26s-seg لمدة 100 دورة على GPU مجاني في Colab.',
+     'train training labels qgis epochs gpu تدريب درب عينات نموذج'),
+    ('Why YOLO?', 'لماذا اخترتِ YOLO؟',
+     'YOLO is fast and open source. It runs on a free GPU for training and on a normal CPU in the web app, and its segmentation version draws outlines, not just boxes.',
+     'لأن YOLO سريع ومفتوح المصدر، ويعمل على GPU مجاني في التدريب وعلى معالج عادي في التطبيق، ونسخة segmentation منه ترسم حدود الشيء وليس مربعاً حوله فقط.',
+     'why yolo choose model لماذا يولو اختيار اخترت'),
+    ('How accurate is it?', 'ما دقة النموذج؟',
+     'In the test area: precision 0.91 and overlap (IoU) 0.68. In an unseen western area, Lava Falls, overlap improved from 0.36 to 0.52 after adding western training areas.',
+     'في منطقة الاختبار: الدقة (precision) 0.91 والتطابق (IoU) 0.68. وفي منطقة غربية لم يرها النموذج (Lava Falls) تحسّن التطابق من 0.36 إلى 0.52 بعد إضافة مناطق تدريب من الغرب.',
+     'accuracy accurate precision recall results good دقه نتائج نتيجه جيد'),
+    ('What is IoU?', 'ما معنى IoU؟',
+     'IoU means Intersection over Union: the area where the AI outline and the hand-drawn outline overlap, divided by the area they cover together. 0 means no overlap, 1 means perfect.',
+     'IoU تعني Intersection over Union: مساحة التطابق بين ما رسمه الذكاء الاصطناعي وما رسمناه باليد، مقسومة على المساحة التي يغطيانها معاً. الصفر يعني لا تطابق، والواحد يعني تطابقاً كاملاً.',
+     'iou intersection union overlap معنى تطابق تقاطع'),
+    ('How many canyons were found?', 'كم عدد الأخاديد المكتشفة؟',
+     '325 side canyons covering 2,397 km², across the whole Grand Canyon. A live run of 123 km² takes about 39 seconds.',
+     '325 أخدوداً جانبياً تغطي 2,397 كم² في Grand Canyon كله. والكشف المباشر لمساحة 123 كم² يأخذ حوالي 39 ثانية.',
+     'how many number count catalogue found canyons كم عدد اخاديد كتالوج مكتشفه وجدت'),
+    ('Was it checked against official names?', 'هل تم التحقق باستخدام الأسماء الرسمية؟',
+     'Yes. Of 186 official named canyons, it found 83% in the central canyon, 54% in the west and 25% in narrow Marble Canyon: 70% overall. 108 canyons now show their official name.',
+     'نعم. من 186 أخدوداً لها أسماء رسمية، وجد النموذج 83% في الوسط، و54% في الغرب، و25% في Marble Canyon الضيق، أي 70% إجمالاً. وأصبح 108 أخاديد تظهر بأسمائها الرسمية.',
+     'gnis official names validation check verify اسماء رسميه تحقق تاكد'),
+    ('What were the main challenges?', 'ما أهم التحديات في المشروع؟',
+     '1) YOLO alone merged neighbouring canyons into blobs of up to 233 km²; elevation now splits them. 2) The first model was weak in the west (IoU 0.36); new training areas raised it to 0.52. 3) Newer satellite images needed a 1000 offset removed. 4) On Mars, one untested rule cut recall from 76% to 52%, so I recalibrated on Earth and froze the rules. 5) Big Mars files crashed Colab, so I used reduced copies.',
+     '1) YOLO وحده دمج الأخاديد المتجاورة في كتل تصل إلى 233 كم²، فأصبحت الارتفاعات تفصلها. 2) النموذج الأول كان ضعيفاً في الغرب (IoU 0.36)، فأضفنا مناطق تدريب جديدة فارتفع إلى 0.52. 3) الصور الحديثة احتاجت حذف إزاحة 1000 من قيمها. 4) على المريخ، قاعدة لم تُختبر خفّضت النتيجة من 76% إلى 52%، فأعدنا المعايرة على الأرض وثبّتنا القواعد. 5) ملفات المريخ الكبيرة أوقفت Colab، فاستخدمنا نسخاً مصغّرة.',
+     'challenges difficulties problems faced issues hard تحديات تحدي صعوبات صعوبه مشاكل مشكلات واجهت'),
+    ('Why compare with Mars?', 'لماذا المقارنة مع المريخ؟',
+     'Valles Marineris is the largest canyon system we know, about 4,000 km long, and nobody can go there. The Grand Canyon’s side canyons were carved by water, so they are a good reference.',
+     'لأن Valles Marineris أكبر نظام أخاديد معروف، طوله حوالي 4,000 كم، ولا أحد يستطيع الذهاب إليه. وأخاديد Grand Canyon الجانبية نحتها الماء، فهي مرجع جيد للمقارنة.',
+     'why mars valles marineris analog reason لماذا مريخ نظير سبب'),
+    ('How can you compare such different sizes?', 'كيف تقارنين بين أحجام مختلفة جداً؟',
+     'Everything is divided by D, the depth of the main canyon: 1,229 m on Earth and 9,237 m on Mars. The rules were set on Earth, frozen, and used on Mars unchanged.',
+     'نقسم كل شيء على D، وهو عمق الأخدود الرئيسي: 1,229 م على الأرض و9,237 م على المريخ. وضبطنا القواعد على الأرض، ثم ثبّتناها، واستخدمناها على المريخ دون تغيير.',
+     'compare size scale depth d divide fair مقارنه حجم احجام قياس عمق'),
+    ('What did you find on Mars?', 'ماذا وجدتِ على المريخ؟',
+     'Seen from above, Mars’s side canyons have the same shape as the Grand Canyon’s (within 1–7%). But they are cut about 40% less deeply relative to the main canyon (0.61 times).',
+     'من الأعلى، شكل الأخاديد الجانبية على المريخ مثل شكلها في Grand Canyon (الفرق 1–7% فقط). لكنها أقل عمقاً بحوالي 40% مقارنة بالأخدود الرئيسي (0.61 مرة).',
+     'mars result finding found shape depth similar different نتيجه مريخ وجدت شكل عمق'),
+    ('Does this prove water on Mars?', 'هل هذا يثبت وجود ماء على المريخ؟',
+     'No. The shape is consistent with water erosion, and the main trough probably deepened by rifting faster than the side canyons. It is a hypothesis, not proof.',
+     'لا. الشكل متوافق مع النحت بالماء، والأخدود الرئيسي غالباً تعمّق بسبب تشقق القشرة أسرع من الأخاديد الجانبية. هذه فرضية وليست إثباتاً.',
+     'water proof prove hypothesis rifting اثبات يثبت ماء مياه يوجد فرضيه'),
+    ('What are the limits?', 'ما حدود المشروع وقيوده؟',
+     'Small test sets, trained on Grand Canyon rocks only, weakest in narrow Marble Canyon, and Mars compared at 200 m with one Earth reference.',
+     'عينات الاختبار قليلة، والنموذج تدرّب على صخور Grand Canyon فقط، وأضعف أداء في Marble Canyon الضيق، والمقارنة مع المريخ بدقة 200 م ومرجع أرضي واحد.',
+     'limits limitations weakness قيود حدود ضعف نقاط'),
+    ('What comes next?', 'ما الخطوات القادمة؟',
+     'Sharper Mars data (CTX, HiRISE), more Earth analogs including rifted canyons, and side-canyon maps for flash-flood studies. The catalogue will also be shared as a gIQ story.',
+     'بيانات أدق للمريخ (CTX وHiRISE)، ونظائر أرضية أكثر منها أخاديد تشكّلت بتشقق القشرة، وخرائط للأخاديد لدراسة السيول. وسيُنشر الكتالوج أيضاً كقصة على gIQ.',
+     'next future plans vision مستقبل قادم خطوات رؤيه خطط'),
+    ('Where is the code?', 'أين الكود؟',
+     'Open on GitHub: github.com/gisshaimaa-ai/canyonscope (AGPL-3.0 licence).',
+     'مفتوح على GitHub: github.com/gisshaimaa-ai/canyonscope (ترخيص AGPL-3.0).',
+     'code github licence open source كود جيت هب مصدر رابط'),
+]
+
+SMALL_TALK = [
+    (re.compile(r'(thank|thanks|شكر|مشكور|يعطيك)', re.I),
+     {'en': 'You’re welcome! Ask me anything else about CanyonScope.', 'ar': 'العفو! اسألني أي شيء آخر عن المشروع.'}),
+    (re.compile(r'(\bhi\b|hello|hey|how are you|مرحب|السلام|اهلا|أهلا|هلا|حالك|شلونك|كيفك)', re.I),
+     {'en': 'Hello! I’m doing great, rolling around Mars. What would you like to know about CanyonScope?',
+      'ar': 'أهلاً! أنا بخير وأتجوّل على المريخ. ماذا تريد أن تعرف عن مشروع CanyonScope؟'}),
+]
+
+ARABIC = re.compile(r'[\u0600-\u06FF]')
+PREFIXES = ('وال', 'بال', 'فال', 'كال', 'لل', 'ال', 'و', 'ب', 'ل', 'ف')
+ARABIC_STOP = {'من', 'في', 'على', 'ما', 'ماذا', 'هل', 'هو', 'هي', 'عن', 'الى', 'لي', 'لنا', 'ان', 'هذا', 'هذه', 'يمكنك',
+               'ممكن', 'تقوم', 'شرح', 'اشرح', 'لو', 'سمحت', 'عندك', 'انت', 'مع'}
+
+
+def normalise(text):
+    """Lower case; for Arabic, remove diacritics, unify letter forms and strip common prefixes."""
+    text = re.sub(r'[ً-ْـ]', '', text.lower())
+    text = text.translate(str.maketrans('أإآىة', 'ااايه'))
+    words = []
+    for word in re.findall(r'\w+', text):
+        if ARABIC.search(word):
+            for prefix in PREFIXES:
+                if word.startswith(prefix) and len(word) - len(prefix) >= 3:
+                    word = word[len(prefix):]
+                    break
+        if word not in ARABIC_STOP:
+            words.append(word)
+    return ' '.join(words)
 
 
 @st.cache_resource(show_spinner=False)
 def search_index():
     from sklearn.feature_extraction.text import TfidfVectorizer
-    keys = list(QUESTIONS)
-    curated = [f'{q} {KEYWORDS.get(q, "")}' for q in keys]
-    full = [f'{q} {KEYWORDS.get(q, "")} {QUESTIONS[q]}' for q in keys]
-    words = TfidfVectorizer(stop_words='english', token_pattern=r'(?u)\b\w+\b', sublinear_tf=True)
-    chars = TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 5), sublinear_tf=True)
-    return keys, words, words.fit_transform(curated), chars, chars.fit_transform(full)
+    curated = [f'{q_en} {q_ar} {extra}' for q_en, q_ar, _, _, extra in ENTRIES]
+    full = [f'{q_en} {q_ar} {extra} {a_en} {a_ar}' for q_en, q_ar, a_en, a_ar, extra in ENTRIES]
+    words = TfidfVectorizer(preprocessor=normalise, stop_words='english', token_pattern=r'(?u)\b\w+\b', sublinear_tf=True)
+    chars = TfidfVectorizer(preprocessor=normalise, analyzer='char_wb', ngram_range=(3, 5), sublinear_tf=True)
+    return words, words.fit_transform(curated), chars, chars.fit_transform(full)
 
 
-def closest_question(text):
-    """The listed question closest to a typed one, or None when nothing is close enough."""
+def closest_entry(text):
+    """Index of the entry closest to a typed question, or None when nothing is close enough."""
     from sklearn.metrics.pairwise import cosine_similarity
-    keys, words, word_matrix, chars, char_matrix = search_index()
+    words, word_matrix, chars, char_matrix = search_index()
     scores = (0.75 * cosine_similarity(words.transform([text]), word_matrix)[0]
               + 0.25 * cosine_similarity(chars.transform([text]), char_matrix)[0])
     best = int(scores.argmax())
-    return keys[best] if scores[best] >= 0.12 else None
+    return best if scores[best] >= 0.12 else None
 
 
-CSS = f"""<style>
-.st-key-rova_widget{{position:fixed;right:24px;bottom:24px;z-index:1000;width:auto}}
-.st-key-rova_widget button{{border-radius:999px;border:1px solid var(--line);background:var(--panel);
-  padding:10px 18px 10px 62px;min-height:56px;font-weight:600;color:var(--text);box-shadow:0 10px 30px rgba(0,0,0,.45);
-  background-image:url('{ROVA_URI}');background-repeat:no-repeat;background-size:44px 44px;background-position:10px center}}
-.st-key-rova_widget button:hover{{border-color:var(--clay)}}
-.rova{{display:flex;gap:12px;align-items:flex-start}}
-.rova img{{width:64px;height:64px;flex:none}}
-.bubble{{background:#2a201a;border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:12px 14px;font-size:.92rem;line-height:1.5;color:var(--text)}}
-.bubble b{{color:var(--sand)}}
-</style>"""
+def project_match(text):
+    """(index, score) of the closest project question."""
+    from sklearn.metrics.pairwise import cosine_similarity
+    words, word_matrix, chars, char_matrix = search_index()
+    scores = (0.75 * cosine_similarity(words.transform([text]), word_matrix)[0]
+              + 0.25 * cosine_similarity(chars.transform([text]), char_matrix)[0])
+    best = int(scores.argmax())
+    return best, float(scores[best])
 
 
-def clear_typed():
+# Words that show a question is about this project rather than general knowledge
+PROJECT_MARKERS = ('canyonscope', 'project', 'your', 'you ', 'app', 'rova', 'train', 'accura', 'iou', 'yolo',
+                   'challenge', 'limit', 'goal', 'code', 'github', 'data', 'how many', 'difference', 'next', 'found',
+                   'find', 'catalog', 'compare', 'user', 'problem', 'model',
+                   'مشروع', 'تطبيق', 'نموذج', 'درب', 'دقه', 'تحدي', 'قيود', 'حدود', 'اهداف', 'هدف', 'كود', 'بيانات',
+                   'عدد', 'فرق', 'قادم', 'وجدت', 'كتالوج', 'مقارن', 'مستفيد', 'مشكل', 'يولو', 'روفا')
+
+# Wikipedia answers are kept only when the article is about one of these subjects
+TOPIC_WORDS = ('space', 'planet', 'mars', 'martian', 'moon', 'sun', 'solar', 'star', 'galaxy', 'galaxies', 'astronomy',
+               'astronomer', 'astronomical', 'orbit', 'satellite', 'nasa', 'spacecraft', 'rocket', 'comet', 'asteroid',
+               'universe', 'cosmic', 'cosmology', 'crater', 'telescope', 'black hole', 'geology', 'geological',
+               'geologist', 'rock', 'mineral', 'erosion', 'tectonic', 'volcano', 'volcanic', 'earthquake', 'sediment',
+               'sedimentary', 'fossil', 'canyon', 'valley', 'river', 'mountain', 'desert', 'glacier', 'climate',
+               'geography', 'geographic', 'continent', 'ocean', 'sea', 'lake', 'island', 'country', 'city', 'capital',
+               'region', 'map', 'remote sensing', 'elevation', 'latitude', 'artificial intelligence', 'machine learning',
+               'neural', 'deep learning', 'algorithm', 'computer vision', 'software', 'programming', 'robot',
+               'language model',
+               'فضاء', 'كوكب', 'كواكب', 'مريخ', 'قمر', 'اقمار', 'شمس', 'شمسي', 'نجم', 'نجوم', 'مجره', 'مجرات', 'فلك',
+               'فلكي', 'مدار', 'صناعي', 'صاروخ', 'مذنب', 'كويكب', 'كون', 'فوهه', 'تلسكوب', 'مركبه', 'ثقب', 'جيولوجيا',
+               'جيولوجي', 'جيولوجيه', 'صخر', 'صخور', 'صخري', 'معدن', 'معادن', 'تعريه', 'تكتونيه', 'تكتونيات', 'صفائح',
+               'بركان', 'براكين', 'بركاني', 'زلزال', 'زلازل', 'رسوبي', 'رسوبيه', 'احفوره', 'احافير', 'اخدود', 'اخاديد',
+               'وادي', 'اوديه', 'نهر', 'انهار', 'جبل', 'جبال', 'صحراء', 'جليد', 'جليدي', 'مناخ', 'جغرافيا', 'جغرافي',
+               'جغرافيه', 'قاره', 'قارات', 'محيط', 'بحر', 'بحار', 'بحيره', 'جزيره', 'دوله', 'مدينه', 'عاصمه', 'منطقه',
+               'خريطه', 'خرائط', 'استشعار', 'ارتفاع', 'ذكاء اصطناعي', 'تعلم الي', 'تعلم عميق', 'عصبيه', 'خوارزميه',
+               'خوارزميات', 'حاسوب', 'برمجه', 'روبوت')
+
+QUESTION_WORDS = re.compile(r'^\s*((what|who|where|when|why|how)( is| are| was| were| do| does| did| can)?( a| an| the)?'
+                            r'|tell me about|explain|ما هو|ما هي|ماهو|ماهي|ما هى|ماذا|من هو|من هي|كيف|لماذا|اين|أين|هل|كم|'
+                            r'عرف|اشرح|اشرح لي)\s+', re.I)
+
+
+# Place words name the subject only when they define it ("Paris is the capital…"), not when an article just mentions a place
+PLACE_WORDS = {'country', 'city', 'capital', 'region', 'island', 'sea', 'lake', 'ocean', 'continent', 'river', 'mountain',
+               'desert', 'valley', 'map', 'دوله', 'مدينه', 'عاصمه', 'منطقه', 'جزيره', 'بحر', 'بحار', 'بحيره', 'محيط',
+               'قاره', 'قارات', 'نهر', 'انهار', 'جبل', 'جبال', 'صحراء', 'وادي', 'اوديه', 'خريطه', 'خرائط'}
+
+
+def on_topic(text, places=True):
+    """True when the text is about space, geology, geography or AI (whole words, not parts of other words).
+    With places=False, place words (city, river…) do not count."""
+    plain = normalise(text)
+    tokens = plain.split()
+    for keyword in TOPIC_WORDS:
+        if not places and keyword in PLACE_WORDS:
+            continue
+        if ' ' in keyword:
+            if keyword in plain:
+                return True
+            continue
+        for token in tokens:
+            if token == keyword or token in (keyword + 's', keyword + 'es', keyword + 'ات') or \
+                    (len(keyword) >= 5 and token.startswith(keyword)):
+                return True
+    return False
+
+
+def first_sentence(text):
+    match = re.search(r'[.!?؟]\s', text)
+    return text[:match.start() + 1] if match and match.start() < 300 else text[:300]
+
+
+def before_location(text):
+    """The part of a definition before a location phrase: 'Pizza is an Italian dish originating in Naples' -> 'Pizza is
+    an Italian dish originating'. A place mentioned only as a location does not make the article about geography."""
+    return re.split(r'\s(?:in|on|at|near|from|located|originating|في|قرب|بالقرب)\s', f' {text} ', maxsplit=1)[0]
+
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def wikipedia_answer(question, language):
+    """Search Wikipedia in the question's language; return the first on-topic article summary, or None.
+    An article counts as on topic when its title, short description or first sentence is about space, geology,
+    geography or AI (or when the question itself is, and the article's opening agrees)."""
+    query = QUESTION_WORDS.sub('', question).strip(' ?؟!.') or question
+    headers = {'User-Agent': 'CanyonScope/1.0 (student research project; Streamlit app)'}
+    base = f'https://{language}.wikipedia.org'
+    params = urllib.parse.urlencode({'action': 'query', 'list': 'search', 'srsearch': query, 'srlimit': 4,
+                                     'format': 'json', 'utf8': 1})
+    with urllib.request.urlopen(urllib.request.Request(f'{base}/w/api.php?{params}', headers=headers), timeout=10) as reply:
+        results = json.load(reply).get('query', {}).get('search', [])
+    question_on_topic = on_topic(question)
+    for result in results:
+        title = result['title']
+        url = f"{base}/api/rest_v1/page/summary/{urllib.parse.quote(title.replace(' ', '_'), safe='')}"
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=10) as reply:
+                page = json.load(reply)
+        except Exception:
+            continue   # one article failing should not stop the others
+        extract = (page.get('extract') or '').strip()
+        if page.get('type') == 'disambiguation' or len(extract) < 40:
+            continue
+        sentence = first_sentence(extract)
+        opening = f"{page.get('title', title)} {page.get('description', '')} {sentence}"
+        definition = f"{before_location(page.get('description', ''))} {before_location(' '.join(sentence.split()[:15]))}"
+        if on_topic(opening, places=False) or on_topic(definition) or \
+                (question_on_topic and on_topic(extract[:600], places=False)):
+            if len(extract) > 600:
+                cut = max(extract.rfind('. ', 0, 600), extract.rfind('.', 0, 600))
+                extract = extract[:cut + 1] if cut > 200 else extract[:600] + '…'
+            return {'title': page.get('title', title), 'extract': extract,
+                    'url': page.get('content_urls', {}).get('desktop', {}).get('page', f'{base}/wiki/{title}')}
+    return None
+
+
+def route(text):
+    """Decide how Rova answers a typed question."""
+    talk = next((n for n, (pattern, _) in enumerate(SMALL_TALK) if pattern.search(text)), None)
+    if talk is not None and len(text.split()) <= 4:
+        return ('talk', talk)
+    index, score = project_match(text)
+    plain = normalise(text) + ' ' + text.lower()
+    if score >= 0.2 and any(marker in plain for marker in PROJECT_MARKERS):
+        return index
+    try:
+        article = wikipedia_answer(text, language_of(text))
+    except Exception:
+        article = 'offline'
+    if article == 'offline':
+        return index if score >= 0.25 else ('offline', None)
+    if article:
+        return ('wiki', article)
+    return index if score >= 0.25 else None
+
+
+def language_of(text):
+    return 'ar' if ARABIC.search(text) else 'en'
+
+
+def remember(question, index, language, typed):
+    st.session_state.rova_history.append((question, index, language, typed))
+    st.session_state.rova_history = st.session_state.rova_history[-12:]
+
+
+def on_choice():
+    choice = st.session_state.rova_question
+    if choice:
+        language = 'ar' if st.session_state.rova_lang == 'العربية' else 'en'
+        labels = [entry[1] if language == 'ar' else entry[0] for entry in ENTRIES]
+        remember(choice, labels.index(choice), language, False)
+    st.session_state.rova_question = None
+
+
+def on_typed():
+    text = st.session_state.rova_text.strip()
+    if text:
+        remember(text, route(text), language_of(text), True)
     st.session_state.rova_text = ''
 
 
-def clear_choice():
-    st.session_state.rova_question = None
+def clear_history():
+    st.session_state.rova_history = []
+
+
+CSS = f"""<style>
+@keyframes rova-hover{{0%,100%{{background-position:10px 60%}}50%{{background-position:10px 35%}}}}
+@keyframes rova-float{{0%,100%{{transform:translateY(0)}}50%{{transform:translateY(-6px)}}}}
+@keyframes rova-fly{{0%{{opacity:0;transform:translate(60px,-28px) rotate(-8deg) scale(.85)}}
+  60%{{opacity:1;transform:translate(-6px,4px) rotate(2deg) scale(1.02)}}100%{{transform:translate(0,0) rotate(0) scale(1)}}}}
+@keyframes rova-glide{{0%,100%{{transform:translateY(0) rotate(0)}}50%{{transform:translateY(-4px) rotate(-.6deg)}}}}
+.st-key-rova_widget{{position:fixed;right:24px;bottom:24px;z-index:1000;width:auto}}
+.st-key-rova_widget button{{border-radius:999px;border:1px solid var(--line);background:var(--panel);
+  padding:10px 18px 10px 62px;min-height:56px;font-weight:600;color:var(--text);box-shadow:0 10px 30px rgba(0,0,0,.45);
+  background-image:url('{ROVA_URI}');background-repeat:no-repeat;background-size:44px 44px;background-position:10px center;
+  animation:rova-hover 2.6s ease-in-out infinite}}
+.st-key-rova_widget button:hover{{border-color:var(--clay)}}
+.rova{{display:flex;gap:10px;align-items:flex-start;margin:6px 0}}
+.rova img{{width:52px;height:52px;flex:none;animation:rova-float 2.6s ease-in-out infinite}}
+.bubble{{background:#2a201a;border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:10px 13px;font-size:.9rem;
+  line-height:1.55;color:var(--text);box-shadow:0 6px 18px rgba(0,0,0,.35)}}
+.bubble.new{{animation:rova-fly .9s cubic-bezier(.2,.8,.2,1) both, rova-glide 4s ease-in-out .9s infinite}}
+.bubble b{{color:var(--sand)}}
+.bubble i{{color:var(--muted)}}
+.asked{{display:flex;justify-content:flex-end;margin:10px 0 2px}}
+.asked span{{background:var(--clay);color:#fff;border-radius:16px 4px 16px 16px;padding:7px 12px;font-size:.88rem;max-width:85%}}
+.st-key-rova_clear button{{background-image:none;padding:4px 14px;min-height:0;animation:none;box-shadow:none}}
+@media (prefers-reduced-motion:reduce){{.st-key-rova_widget button,.rova img,.bubble.new{{animation:none}}}}
+</style>"""
+
+
+def rova_says(text, language, new=False):
+    direction = ' dir="rtl" style="text-align:right"' if language == 'ar' else ''
+    css = 'bubble new' if new else 'bubble'
+    return (f'<div class="rova"><img src="{ROVA_URI}" alt="Rova, a cartoon Mars rover">'
+            f'<div class="{css}"{direction}>{text}</div></div>')
 
 
 def show_rova():
     st.markdown(CSS, unsafe_allow_html=True)
+    if 'rova_history' not in st.session_state:
+        st.session_state.rova_history = []
     with st.container(key='rova_widget'):
         with st.popover('Ask Rova'):
-            question = st.selectbox('Choose a question', list(QUESTIONS), index=None, placeholder='Choose a question…',
-                                    key='rova_question', on_change=clear_typed)
-            typed = st.text_input('…or type your own (English or Arabic)', key='rova_text', on_change=clear_choice,
-                                  placeholder='e.g. How many canyons did you find?').strip()
-            if typed:
-                match = closest_question(typed)
-                if match:
-                    text = (f'<b>{html.escape(match)}</b><br>{html.escape(QUESTIONS[match])}'
-                            '<br><i style="color:var(--muted)">Closest answer I have to your question.</i>')
-                else:
-                    text = ('I don’t have an answer to that one. I only know about CanyonScope: the data, the AI, '
-                            'the results and Mars. Try one of the listed questions.')
-            elif question:
-                text = f'<b>{html.escape(question)}</b><br>{html.escape(QUESTIONS[question])}'
-            else:
-                text = html.escape(GREETING)
-            st.markdown(f'<div class="rova"><img src="{ROVA_URI}" alt="Rova, a cartoon Mars rover">'
-                        f'<div class="bubble">{text}</div></div>', unsafe_allow_html=True)
+            language_choice = st.radio('Language', ['English', 'العربية'], key='rova_lang', horizontal=True,
+                                       label_visibility='collapsed')
+            arabic = language_choice == 'العربية'
+            labels = [entry[1] if arabic else entry[0] for entry in ENTRIES]
+            st.selectbox('اختر سؤالاً' if arabic else 'Choose a question', labels, index=None,
+                         placeholder='اختر سؤالاً…' if arabic else 'Choose a question…',
+                         key='rova_question', on_change=on_choice)
+            st.text_input('…أو اكتب سؤالك ثم اضغط Enter' if arabic else '…or type your own and press Enter (English or Arabic)',
+                          key='rova_text', on_change=on_typed,
+                          placeholder='مثلاً: ما هي الصفائح التكتونية؟' if arabic else 'e.g. How did the Grand Canyon form?')
+            history = st.session_state.rova_history
+            with st.container(height=330, border=False):
+                if not history:
+                    language = 'ar' if arabic else 'en'
+                    st.markdown(rova_says(html.escape(GREETING[language]), language, new=True), unsafe_allow_html=True)
+                for number, (question, index, language, typed) in enumerate(history):
+                    newest = number == len(history) - 1
+                    direction = ' dir="rtl"' if language_of(question) == 'ar' else ''
+                    parts = [f'<div class="asked"><span{direction}>{html.escape(question)}</span></div>']
+                    if index is None:
+                        answer = html.escape(NOT_FOUND[language])
+                    elif isinstance(index, tuple) and index[0] == 'talk':
+                        answer = html.escape(SMALL_TALK[index[1]][1][language])
+                    elif isinstance(index, tuple) and index[0] == 'offline':
+                        answer = html.escape('لم أستطع الوصول إلى ويكيبيديا الآن. حاول بعد قليل.' if language == 'ar'
+                                             else 'I couldn’t reach Wikipedia right now. Please try again in a moment.')
+                    elif isinstance(index, tuple) and index[0] == 'wiki':
+                        article = index[1]
+                        source = ('المصدر: ويكيبيديا (CC BY-SA 4.0) — ليست من نتائج المشروع' if language == 'ar'
+                                  else 'Source: Wikipedia (CC BY-SA 4.0), not part of the project results')
+                        answer = (f'<b>{html.escape(article["title"])}</b><br>{html.escape(article["extract"])}'
+                                  f'<br><i><a href="{html.escape(article["url"])}" target="_blank" '
+                                  f'style="color:var(--sand)">{source}</a></i>')
+                    else:
+                        q_en, q_ar, a_en, a_ar, _ = ENTRIES[index]
+                        title, body = (q_ar, a_ar) if language == 'ar' else (q_en, a_en)
+                        answer = f'<b>{html.escape(title)}</b><br>{html.escape(body)}'
+                        if typed:
+                            answer += '<br><i>' + ('أقرب جواب عندي لسؤالك.' if language == 'ar' else 'The closest answer I have to your question.') + '</i>'
+                    parts.append(rova_says(answer, language, new=newest))
+                    st.markdown(''.join(parts), unsafe_allow_html=True)
+            if history:
+                st.button('مسح المحادثة' if arabic else 'Clear chat', key='rova_clear', on_click=clear_history)
