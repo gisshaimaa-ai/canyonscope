@@ -35,26 +35,27 @@ def planet_figure(name, mode, exaggeration):
     figure = go.Figure(go.Surface(
         x=x, y=y, z=z, surfacecolor=colour, cmin=0, cmax=1, colorscale=EARTH_SCALE if name == 'Earth' else MARS_SCALE,
         showscale=False, hovertemplate=f'%{{z:.2f}} {unit}<extra></extra>',
-        lighting=dict(ambient=0.5, diffuse=0.85, roughness=0.9, specular=0.05)))
+        lighting=dict(ambient=0.5, diffuse=0.85, roughness=0.9, specular=0.05),
+        contours=dict(x=dict(highlight=False), y=dict(highlight=False), z=dict(highlight=False))))
     width, height = x.max(), y.max()
     vertical = (np.nanmax(-z) * exaggeration) / width
     figure.update_layout(
         height=470, margin=dict(l=0, r=0, t=0, b=0), paper_bgcolor='#15110e',
-        scene=dict(aspectmode='manual', aspectratio=dict(x=1.6, y=1.6 * height / width, z=max(1.6 * vertical, 0.05)),
+        scene=dict(aspectmode='manual', aspectratio=dict(x=1.6, y=1.6 * height / width, z=min(max(1.6 * vertical, 0.12), 1.2)),
                    xaxis=dict(title=f'East ({unit})', color='#b9aa9a', gridcolor='#3a2e25', backgroundcolor='#15110e'),
                    yaxis=dict(title=f'North ({unit})', color='#b9aa9a', gridcolor='#3a2e25', backgroundcolor='#15110e'),
                    zaxis=dict(title=z_label, color='#b9aa9a', gridcolor='#3a2e25', backgroundcolor='#15110e'),
-                   camera=dict(eye=dict(x=0.9, y=-1.6, z=1.0)), bgcolor='#15110e'))
+                   camera=dict(eye=dict(x=0.6, y=-1.5, z=0.75)), bgcolor='#15110e'))
     return figure, rows * pixel / 1000, cols * pixel / 1000, D
 
 
 def show_3d():
-    st.markdown('<div class="page-title">3D view: Earth and Mars</div>'
-                '<div class="page-sub">Depth below the surrounding plateau, from the same maps used in the Earth vs Mars '
+    st.markdown('<div class="section">3D view: Earth and Mars</div>'
+                '<div class="section-sub">Depth below the surrounding plateau, from the same maps used in the Earth vs Mars '
                 'analysis. Drag to turn, scroll to zoom.</div>', unsafe_allow_html=True)
     left, right = st.columns([2, 1])
     mode = left.radio('Scale', ['Relative (÷ D)', 'True size (km)'], key='view_mode', horizontal=True)
-    exaggeration = right.slider('Vertical exaggeration', 1, 20, 5, key='view_exaggeration')
+    exaggeration = right.slider('Vertical exaggeration', 1, 60, 25, key='view_exaggeration')
 
     earth_col, mars_col = st.columns(2)
     for column, name, place in [(earth_col, 'Earth', 'Grand Canyon, Arizona'), (mars_col, 'Mars', 'Valles Marineris, 92°W–52°W')]:

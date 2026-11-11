@@ -154,12 +154,10 @@ python scripts/example_detection.py
 
 1. **Home** — project overview, history and openly licensed media.
 2. **Explorer** — draw a rectangle (up to 400 km²) inside the Grand Canyon region; detection starts automatically (about 1–4 minutes on Streamlit Cloud). See the Sentinel-2 input beside the detections, the geology of the area, a table of canyons, and download GeoJSON / CSV.
-3. **Analytics** — statistics of the 325-canyon catalogue.
-4. **Earth vs Mars** — maps of tributary canyons on both planets, the shape comparison and robustness checks.
-5. **Method & Accuracy** and **Data** — metrics, sources and downloads.
-6. **Learn** — canyon words explained (valley, canyon, gorge, tributary, mouth), a drawn 3D landscape and a short quiz.
-7. **3D** — the Grand Canyon and Valles Marineris in 3D, in units of D or at true size.
-8. **Ask** — questions answered only from the project’s own facts. Without a key it uses offline search (scikit-learn). Optional: add `GEMINI_API_KEY` (and `GEMINI_MODEL`) in the app’s Secrets on Streamlit Cloud to let Google Gemini write the answers from the same facts. Never commit a key to GitHub.
+3. **Earth vs Mars** — maps of tributary canyons on both planets, the shape comparison and robustness checks.
+4. **Results** — three tabs: Analytics (the 325-canyon catalogue), Method & Accuracy (tests and the official-names check) and Data (sources and downloads).
+5. **Learn** — two tabs: Canyon basics (valley, canyon, gorge, tributary, mouth; a drawn 3D landscape and a short quiz) and 3D Earth and Mars (in units of D or at true size).
+6. **Ask Rova** — a small floating helper on every page. Visitors choose a question or type their own (English or Arabic); every answer is a project fact written in advance, and typed questions are matched to the closest one by an offline search (scikit-learn). Nothing is sent outside the app.
 
 **Deploying on Streamlit Community Cloud:** connect this repository, choose branch `main`, main file `app.py`, Python 3.13. `packages.txt` installs the system libraries OpenCV needs.
 
@@ -181,7 +179,7 @@ Large intermediate files (imagery, DEMs, tiles, the 349 MB Mars raster) are rebu
 
 ```
 app.py                     Streamlit app (all pages)
-learn.py, view3d.py, ask.py  Learn, 3D and Ask pages
+learn.py, view3d.py, ask.py  Learn page, 3D view and the Ask Rova helper
 detector.py                Live detection: Sentinel-2 + YOLO + DEM separation
 analog/flowtools.py        Flow routing for the Earth vs Mars analysis
 models/seg_rgb_v2/best.pt  Trained YOLO model (23 MB)

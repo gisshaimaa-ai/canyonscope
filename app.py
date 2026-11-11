@@ -34,7 +34,7 @@ DATE_OPTIONS = {
     'Summer 2025': '2025-05-15/2025-08-31',
     'Summer 2024': '2024-05-15/2024-08-31',
 }
-PAGES = ['Home', 'Learn', 'Explorer', 'Analytics', 'Earth vs Mars', '3D', 'Method & Accuracy', 'Data', 'Ask']
+PAGES = ['Home', 'Explorer', 'Earth vs Mars', 'Results', 'Learn']
 HEADERS = {'User-Agent': 'GrandCanyonTributaryExplorer/1.0 (student research project)'}
 CSS = """
 <style>
@@ -46,12 +46,13 @@ header[data-testid="stHeader"]{background:transparent}
 .block-container{max-width:1420px;padding-top:1rem;padding-bottom:3rem}
 .brand{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:700;color:var(--text);padding-top:6px}
 .brand span{color:var(--clay)}
-div[role="radiogroup"]{gap:6px;justify-content:flex-end}
-div[role="radiogroup"] label{background:transparent;border:1px solid transparent;border-radius:999px;padding:6px 16px;margin:0}
-div[role="radiogroup"] label>div:not(:has(p)){display:none}
-div[role="radiogroup"] label:hover{border-color:var(--line)}
-div[role="radiogroup"] label:has(input:checked){background:var(--clay)}
-div[role="radiogroup"] label:has(input:checked) p{color:#fff}
+.st-key-nav div[role="radiogroup"]{gap:6px;justify-content:flex-end}
+.st-key-nav div[role="radiogroup"] label{background:transparent;border:1px solid var(--line);border-radius:999px;padding:10px 22px;margin:0;cursor:pointer;min-height:44px;align-items:center}
+.st-key-nav div[role="radiogroup"] label p{font-size:1rem;font-weight:600}
+.st-key-nav div[role="radiogroup"] label>div:not(:has(p)){display:none}
+.st-key-nav div[role="radiogroup"] label:hover{border-color:var(--clay)}
+.st-key-nav div[role="radiogroup"] label:has(input:checked){background:var(--clay)}
+.st-key-nav div[role="radiogroup"] label:has(input:checked) p{color:#fff}
 .hero{min-height:560px;border-radius:20px;padding:56px;display:flex;flex-direction:column;justify-content:flex-end;background-size:cover;background-position:center;border:1px solid var(--line)}
 .eyebrow{font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--sand);font-weight:600}
 .hero h1{font-family:'Fraunces',serif;font-size:4rem;line-height:1.05;margin:.5rem 0;color:#fff;padding:0;max-width:900px}
@@ -933,28 +934,33 @@ for name, value in defaults.items():
         st.session_state[name] = value
 
 results = load_results()
-brand, navigation = st.columns([1, 5])
+brand, navigation = st.columns([1, 3])
 brand.markdown('<div class="brand">Canyon<span>Scope</span></div>', unsafe_allow_html=True)
-page = navigation.radio('Navigation', PAGES, key='page', horizontal=True, label_visibility='collapsed')
+with navigation.container(key='nav'):
+    page = st.radio('Navigation', PAGES, key='page', horizontal=True, label_visibility='collapsed')
+
+from ask import show_rova
+show_rova()   # floating helper on every page
 
 if page == 'Home':
     show_home(results)
 elif page == 'Explorer':
     show_explorer()
-elif page == 'Analytics':
-    show_analytics(results)
 elif page == 'Earth vs Mars':
     show_mars()
-elif page == 'Method & Accuracy':
-    show_method()
-elif page == 'Learn':
-    from learn import show_learn
-    show_learn()
-elif page == '3D':
-    from view3d import show_3d
-    show_3d()
-elif page == 'Ask':
-    from ask import show_ask
-    show_ask()
+elif page == 'Results':
+    analytics_tab, method_tab, data_tab = st.tabs(['Analytics', 'Method & Accuracy', 'Data'])
+    with analytics_tab:
+        show_analytics(results)
+    with method_tab:
+        show_method()
+    with data_tab:
+        show_data(results)
 else:
-    show_data(results)
+    from learn import show_learn
+    from view3d import show_3d
+    basics_tab, view_tab = st.tabs(['Canyon basics', '3D Earth and Mars'])
+    with basics_tab:
+        show_learn()
+    with view_tab:
+        show_3d()

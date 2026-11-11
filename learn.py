@@ -78,6 +78,7 @@ def landscape_figure(feature):
     scale = [[0.0, '#4a2a1a'], [0.35, '#a0583a'], [0.65, '#d9a27a'], [0.8, '#efd8b8'], [0.81, '#2fb3c0'], [1.0, '#2fb3c0']]
     figure = go.Figure(go.Surface(x=X, y=Y, z=Z, surfacecolor=colour, cmin=0, cmax=1, colorscale=scale,
                                   showscale=False, hoverinfo='skip',
+                                  contours=dict(x=dict(highlight=False), y=dict(highlight=False), z=dict(highlight=False)),
                                   lighting=dict(ambient=0.55, diffuse=0.8, roughness=0.9, specular=0.1)))
     if feature == 'Mouths':
         mx, my = zip(*mouths)
