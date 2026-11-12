@@ -157,7 +157,7 @@ python scripts/example_detection.py
 3. **Earth vs Mars** — maps of tributary canyons on both planets, the shape comparison and robustness checks.
 4. **Results** — three tabs: Analytics (the 325-canyon catalogue), Method & Accuracy (tests and the official-names check) and Data (sources and downloads).
 5. **Learn** — two tabs: Canyon basics (valley, canyon, gorge, tributary, mouth; a drawn 3D landscape and a short quiz) and 3D Earth and Mars (in units of D or at true size).
-6. **Ask Rova** — a small floating helper on every page, in English and Arabic. Visitors choose a question or type their own; every answer is a project fact written in advance from the results, and typed questions are matched to the closest one by an offline search (scikit-learn). Other topics are politely declined, so nothing is invented and nothing is sent outside the app. The owner can unlock a presenter mode (password stored in the Streamlit secrets, never in GitHub) in which Rova answers with Google Gemini; visitors never reach Gemini.
+6. **Ask Rova** — a small floating helper on every page, in English and Arabic. Visitors choose a question or type their own; every answer is a project fact written in advance from the results, and typed questions are matched to the closest one by an offline search (scikit-learn). Other topics are politely declined, so nothing is invented and nothing is sent outside the app.
 
 **Deploying on Streamlit Community Cloud:** connect this repository, choose branch `main`, main file `app.py`, Python 3.13. `packages.txt` installs the system libraries OpenCV needs.
 

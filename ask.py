@@ -1,15 +1,10 @@
 """Ask Rova: a small floating helper on every page, in English and Arabic.
 Visitors pick a question or type their own; Rova answers only from facts written in advance from the project's
 results (typed questions are matched to the closest fact by a small offline search with scikit-learn). Other
-topics get a polite "I can only help with this project". Nothing is sent outside the app and nothing is invented.
-The owner can unlock a presenter mode (password in the Streamlit secrets) in which Rova answers with Google Gemini;
-visitors never reach Gemini."""
+topics get a polite "I can only help with this project". Nothing is sent outside the app and nothing is invented."""
 import base64
 import html
-import json
 import re
-import urllib.parse
-import urllib.request
 
 import streamlit as st
 
@@ -224,80 +219,6 @@ def route(text):
     return None
 
 
-# ---------- Presenter mode: Rova answers with Google Gemini (owner only, unlocked with a password) ----------
-# Needs two Streamlit secrets: GEMINI_API_KEY and ROVA_PRESENTER_PASSWORD (optional: GEMINI_MODEL).
-# Visitors never reach Gemini; they get the project facts above.
-
-def secret(name, default=None):
-    try:
-        return st.secrets.get(name, default)
-    except Exception:
-        return default
-
-
-def presenter_ready():
-    return bool(secret('GEMINI_API_KEY')) and bool(secret('ROVA_PRESENTER_PASSWORD'))
-
-
-def check_password():
-    import hmac
-    typed = st.session_state.get('rova_pw', '')
-    expected = str(secret('ROVA_PRESENTER_PASSWORD', ''))
-    st.session_state.rova_presenter = bool(expected) and hmac.compare_digest(typed.encode(), expected.encode())
-    st.session_state.rova_pw_wrong = bool(typed) and not st.session_state.rova_presenter
-    st.session_state.rova_pw = ''
-
-
-def presenter_off():
-    st.session_state.rova_presenter = False
-
-
-@st.cache_data(show_spinner=False, ttl=86400)
-def gemini_model(key):
-    """The model to use: GEMINI_MODEL if set, else the newest available 'flash' model that can write text."""
-    chosen = secret('GEMINI_MODEL')
-    if chosen:
-        return chosen
-    request = urllib.request.Request('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',
-                                     headers={'x-goog-api-key': key})
-    with urllib.request.urlopen(request, timeout=20) as reply:
-        models = json.load(reply).get('models', [])
-    names = [m['name'].removeprefix('models/') for m in models
-             if 'generateContent' in m.get('supportedGenerationMethods', [])]
-    flash = [n for n in names if 'flash' in n and 'lite' not in n and 'image' not in n and 'tts' not in n
-             and 'preview' not in n and 'exp' not in n]
-    return sorted(flash)[-1] if flash else (names[0] if names else 'gemini-2.5-flash')
-
-
-def ask_gemini(question, earlier):
-    key = secret('GEMINI_API_KEY')
-    facts = '\n'.join(f'- {q_en} {a_en}' for q_en, _, a_en, _, _ in ENTRIES)
-    instruction = (
-        'You are Rova, a friendly cartoon Mars rover and the helper of CanyonScope, a GeoAI student project. '
-        'Answer questions about the project, space, planetary science, geology, geography and AI tools. '
-        'Politely decline other topics in one sentence. Reply in the language of the question (Arabic or English), '
-        'in plain, simple words, at most 120 words, without markdown. '
-        'For anything about the project, use ONLY these facts and never invent numbers; if the facts do not cover it, '
-        'say you do not know:\n' + facts)
-    contents = []
-    for asked, said in earlier[-4:]:
-        contents.append({'role': 'user', 'parts': [{'text': asked}]})
-        contents.append({'role': 'model', 'parts': [{'text': said}]})
-    contents.append({'role': 'user', 'parts': [{'text': question}]})
-    body = {'system_instruction': {'parts': [{'text': instruction}]}, 'contents': contents,
-            'generationConfig': {'temperature': 0.3, 'maxOutputTokens': 600}}
-    request = urllib.request.Request(
-        f'https://generativelanguage.googleapis.com/v1beta/models/{gemini_model(key)}:generateContent',
-        data=json.dumps(body).encode(), headers={'Content-Type': 'application/json', 'x-goog-api-key': key})
-    with urllib.request.urlopen(request, timeout=40) as reply:
-        result = json.load(reply)
-    parts = result.get('candidates', [{}])[0].get('content', {}).get('parts', [])
-    text = ''.join(part.get('text', '') for part in parts).strip()
-    if not text:
-        raise ValueError(f'empty Gemini reply: {str(result)[:200]}')
-    return text
-
-
 def language_of(text):
     return 'ar' if ARABIC.search(text) else 'en'
 
@@ -319,16 +240,7 @@ def on_choice():
 def on_typed():
     text = st.session_state.rova_text.strip()
     if text:
-        if st.session_state.get('rova_presenter'):
-            earlier = [(q, i[1]) for q, i, _, _ in st.session_state.rova_history
-                       if isinstance(i, tuple) and i[0] == 'gemini']
-            try:
-                remember(text, ('gemini', ask_gemini(text, earlier)), language_of(text), True)
-            except Exception as error:
-                print(f'Gemini failed ({type(error).__name__}: {error})', flush=True)
-                remember(text, route(text), language_of(text), True)
-        else:
-            remember(text, route(text), language_of(text), True)
+        remember(text, route(text), language_of(text), True)
     st.session_state.rova_text = ''
 
 
@@ -398,9 +310,6 @@ def show_rova():
                         answer = html.escape(NOT_FOUND[language])
                     elif isinstance(index, tuple) and index[0] == 'talk':
                         answer = html.escape(SMALL_TALK[index[1]][1][language])
-                    elif isinstance(index, tuple) and index[0] == 'gemini':
-                        answer = (html.escape(index[1]).replace('\n', '<br>') +
-                                  '<br><i>' + ('أُجيب بمساعدة Gemini' if language == 'ar' else 'Answered with Gemini') + '</i>')
                     else:
                         q_en, q_ar, a_en, a_ar, _ = ENTRIES[index]
                         title, body = (q_ar, a_ar) if language == 'ar' else (q_en, a_en)
@@ -411,12 +320,3 @@ def show_rova():
                     st.markdown(''.join(parts), unsafe_allow_html=True)
             if history:
                 st.button('مسح المحادثة' if arabic else 'Clear chat', key='rova_clear', on_click=clear_history)
-            if presenter_ready():
-                with st.expander('Presenter', expanded=False):
-                    if st.session_state.get('rova_presenter'):
-                        st.caption('Presenter mode is on: Rova answers with Gemini.')
-                        st.button('Turn off', key='rova_presenter_off', on_click=presenter_off)
-                    else:
-                        st.text_input('Password', type='password', key='rova_pw', on_change=check_password)
-                        if st.session_state.get('rova_pw_wrong'):
-                            st.caption('Wrong password.')
